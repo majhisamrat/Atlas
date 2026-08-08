@@ -1,5 +1,5 @@
 {
   "buildCommand": "npm install --legacy-peer-deps && npm run build",
   "outputDirectory": "dist",
-  "nodeVersion": "18.x"
+  "nodeVersion": "18.17.0"
 }

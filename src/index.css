@@ -24,8 +24,15 @@
     --input: 211 42% 84%;
     --ring: 221 83% 53%;
     --radius: 1.15rem;
-    --sidebar-width: 320px;
-    --sidebar-collapsed: 80px;
+    --sidebar-width: 25rem;
+    --sidebar-collapsed: 6.25rem;
+  }
+
+  @media (min-width: 768px) {
+    :root {
+      --sidebar-width: 31.25rem;
+      --sidebar-collapsed: 7.8125rem;
+    }
   }
 
   .dark {
@@ -56,16 +63,21 @@
     @apply border-border;
   }
   html {
-    font-size: 16px;
+    font-size: 12.8px;
+  }
+  @media (min-width: 768px) {
+    html {
+      font-size: 10.24px;
+    }
   }
   @media (min-width: 1440px) {
     html {
-      font-size: 16px;
+      font-size: 10.24px;
     }
   }
   @media (min-width: 1920px) {
     html {
-      font-size: 16px;
+      font-size: 10.24px;
     }
   }
   body {

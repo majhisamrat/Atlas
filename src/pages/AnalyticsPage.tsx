@@ -108,7 +108,7 @@ export default function AnalyticsPage() {
 
           {/* Range Selector */}
           <Select value={selectedOption} onValueChange={handleSelectChange}>
-            <SelectTrigger className="w-[190px] h-11 text-xs font-bold rounded-xl bg-card border-border shadow-sm">
+            <SelectTrigger className="w-[clamp(14.84375rem,14.84375rem,18.55859375rem)] h-11 text-xs font-bold rounded-xl bg-card border-border shadow-sm">
               <SelectValue placeholder="Select Timeframe" />
             </SelectTrigger>
             <SelectContent>

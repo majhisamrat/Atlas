@@ -22,7 +22,7 @@ export default {
       center: true,
       padding: '2rem',
       screens: {
-        '2xl': '1400px',
+        '2xl': 'clamp(109.375rem, 109.375rem, 136.71875rem)',
       },
     },
     extend: {

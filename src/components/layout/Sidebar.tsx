@@ -52,12 +52,14 @@ export function Sidebar({ collapsed, onToggle, isDrawerOpen, onDrawerClose }: {
   return (
     <aside
       className={cn(
-        'fixed left-0 top-0 z-50 h-screen transition-all duration-300 ease-out glass-sidebar bg-white/90 backdrop-blur-2xl flex flex-col justify-between border-r border-sky-100 shadow-[8px_0_40px_-25px_rgba(10,50,100,.35)] overflow-hidden',
+        'fixed left-0 top-0 z-50 h-screen transition-all duration-300 ease-out glass-sidebar bg-white/90 backdrop-blur-2xl flex flex-col justify-between border-r border-sky-100 shadow-[clamp(0.625rem,0.625rem,0.78125rem)_0_clamp(3.125rem,3.125rem,3.90625rem)_clamp(-1.953125rem,-1.953125rem,-2.44140625rem)_rgba(10,50,100,.35)] overflow-hidden',
         // Desktop: always flex. Mobile/Responsive: hidden unless drawer open
         'md:flex',
         isDrawerOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0',
-        isCollapsed ? 'w-[76px]' : 'w-72',
       )}
+      style={{
+        width: isCollapsed ? 'var(--sidebar-collapsed)' : 'var(--sidebar-width)',
+      }}
     >
       {/* Top Section */}
       <div className="flex flex-col">
@@ -73,7 +75,7 @@ export function Sidebar({ collapsed, onToggle, isDrawerOpen, onDrawerClose }: {
                 <span className="brand-atlas text-2xl leading-none text-[#082c67]">
                   ATLAS
                 </span>
-                <span className="text-[10px] font-bold tracking-[0.16em] text-sky-700 uppercase">
+                <span className="text-xs font-bold tracking-[0.16em] text-sky-700 uppercase">
                   Intelligence hub
                 </span>
               </div>

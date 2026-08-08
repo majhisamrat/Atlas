@@ -10,7 +10,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
-import { Send, Brain, User, Loader2, BookOpen, Plus, ArrowUpRight, ChevronLeft, ChevronRight, Sparkles, MessageSquare, Trash2, Database, Menu, Filter, Check } from 'lucide-react';
+import { Send, Brain, User, Loader2, BookOpen, Plus, ArrowUpRight, ChevronLeft, ChevronRight, Sparkles, MessageSquare, Trash2, Database, Menu, Filter, Check, X } from 'lucide-react';
 import type { ChatMessageDisplay } from '@/types/chat';
 import { FadeIn } from '@/components/shared/motion';
 import { cn } from '@/lib/utils';
@@ -42,6 +42,8 @@ export default function ChatPage() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const navigate = useNavigate();
+  const touchStartX = useRef(0);
+  const touchEndX = useRef(0);
   
   // Rate limit state
   const [rateLimitInfo, setRateLimitInfo] = useState<{
@@ -69,6 +71,60 @@ export default function ChatPage() {
       window.removeEventListener('orientationchange', handleResize);
     };
   }, []);
+
+  // Close history when clicking outside on mobile
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      // Only on mobile/tablet
+      if (window.innerWidth < 1024 && historyExpanded) {
+        const isClickInHistory = target.closest('[data-chat-history]');
+        const isClickInMenuButton = target.closest('[title="Toggle chat history"]');
+        
+        if (!isClickInHistory && !isClickInMenuButton) {
+          setHistoryExpanded(false);
+        }
+      }
+    };
+
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, [historyExpanded]);
+
+  // Handle swipe gestures
+  useEffect(() => {
+    const handleTouchStart = (e: TouchEvent) => {
+      touchStartX.current = e.changedTouches[0].screenX;
+    };
+
+    const handleTouchEnd = (e: TouchEvent) => {
+      touchEndX.current = e.changedTouches[0].screenX;
+      handleSwipe();
+    };
+
+    const handleSwipe = () => {
+      const swipeThreshold = 50; // Minimum swipe distance
+      const diff = touchStartX.current - touchEndX.current;
+
+      // Right swipe (closing gesture) - from right to left
+      if (diff > swipeThreshold && historyExpanded && window.innerWidth < 1024) {
+        setHistoryExpanded(false);
+      }
+
+      // Left swipe (opening gesture) - from left to right
+      if (diff < -swipeThreshold && !historyExpanded && window.innerWidth < 1024) {
+        setHistoryExpanded(true);
+      }
+    };
+
+    document.addEventListener('touchstart', handleTouchStart, false);
+    document.addEventListener('touchend', handleTouchEnd, false);
+
+    return () => {
+      document.removeEventListener('touchstart', handleTouchStart, false);
+      document.removeEventListener('touchend', handleTouchEnd, false);
+    };
+  }, [historyExpanded]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -645,93 +701,102 @@ export default function ChatPage() {
 
         {/* ─── SLIDE-IN HISTORY PANEL ─── */}
         {historyExpanded && (
-          <div className="absolute inset-y-0 left-0 w-80 border-r border-border/40 bg-card/95 backdrop-blur-sm z-30 animate-in slide-in-from-left-full duration-300 rounded-l-3xl">
-
-            {/* ─── EDGE TOGGLE ARROW (RIGHT EDGE OF SIDEBAR - shown when sidebar is OPEN) ─── */}
-            <button
+          <>
+            {/* Backdrop - tap to close */}
+            <div
+              className="absolute inset-0 bg-black/20 z-20 md:hidden"
               onClick={() => setHistoryExpanded(false)}
-              title="Close chat history"
-              className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 z-50 flex items-center justify-center w-7 h-14 rounded-r-xl rounded-l-md bg-gradient-to-r from-slate-800 to-slate-900 text-white shadow-lg shadow-slate-900/30 hover:from-red-600 hover:to-red-700 hover:shadow-red-500/30 transition-all duration-300 group border border-white/10"
-            >
-              <ChevronLeft className="h-4 w-4 group-hover:-translate-x-0.5 transition-transform" />
-            </button>
-
-            <div className="h-full overflow-y-auto">
-              <div className="p-6">
-                <div className="max-w-4xl mx-auto">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="font-bold text-base text-foreground">Recent Conversations</h3>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={startNewChat}
-                      className="gap-2 h-9 text-xs font-bold rounded-lg border-border hover:bg-muted"
-                    >
-                      <Plus className="h-3 w-3" />
-                      New Chat
-                    </Button>
-                  </div>
-                  
-                  {loadingHistory ? (
-                    <div className="flex items-center justify-center py-8">
-                      <Loader2 className="h-6 w-6 animate-spin text-primary" />
-                    </div>
-                  ) : chatHistoryData.length === 0 ? (
-                    <div className="text-center py-8 text-muted-foreground">
-                      <MessageSquare className="h-8 w-8 mx-auto mb-3 opacity-50" />
-                      <p className="text-sm font-medium">No conversations yet</p>
-                      <p className="text-xs mt-1">Start chatting to see your history here</p>
-                    </div>
-                  ) : (
-                    <div className="grid grid-cols-1 gap-3">
-                      {chatHistoryData.map((session) => (
-                        <div
-                          key={session.session_id}
-                          className={cn(
-                            "group relative p-4 rounded-xl cursor-pointer transition-all duration-200 border bg-background/80 hover:shadow-md",
-                            sessionId === session.session_id 
-                              ? "border-primary/50 shadow-sm ring-2 ring-primary/20 bg-primary/5" 
-                              : "border-border/60 hover:bg-muted/30 hover:border-border"
-                          )}
-                          onClick={() => loadChatSession(session.session_id)}
+            />
+            
+            <div className="absolute inset-y-0 left-0 w-80 border-r border-border/40 bg-card/95 backdrop-blur-sm z-30 animate-in slide-in-from-left-full duration-300 rounded-l-3xl" data-chat-history>
+              <div className="h-full overflow-y-auto">
+                <div className="p-6">
+                  <div className="max-w-4xl mx-auto">
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="font-bold text-base text-foreground">Recent Conversations</h3>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={startNewChat}
+                          className="h-8 w-8 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted"
+                          title="New Chat"
                         >
-                          {/* Session Content */}
-                          <div className="pr-8">
-                            <div className="font-semibold text-sm text-foreground truncate mb-2">
-                              {session.title || 'Untitled Chat'}
-                            </div>
-                            <div className="space-y-2 text-xs text-muted-foreground">
-                              <div className="flex items-center gap-2">
-                                <BookOpen className="h-3 w-3 flex-shrink-0" />
-                                <span className="truncate">{session.knowledge_base_name}</span>
-                              </div>
-                              <div className="flex items-center justify-between">
-                                <span className="flex items-center gap-1">
-                                  <MessageSquare className="h-3 w-3" />
-                                  {session.message_count} messages
-                                </span>
-                                <span>{new Date(session.created_at).toLocaleDateString()}</span>
-                              </div>
-                            </div>
-                          </div>
-
-                          {/* Delete Button */}
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={(e) => deleteChatSession(session.session_id, e)}
-                            className="absolute top-3 right-3 h-7 w-7 p-0 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20 opacity-60 group-hover:opacity-100 transition-all"
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </Button>
-                        </div>
-                      ))}
+                          <Plus className="h-5 w-5" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => setHistoryExpanded(false)}
+                          className="h-8 w-8 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted"
+                          title="Close"
+                        >
+                          <X className="h-5 w-5" />
+                        </Button>
+                      </div>
                     </div>
-                  )}
+                    
+                    {loadingHistory ? (
+                      <div className="flex items-center justify-center py-8">
+                        <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                      </div>
+                    ) : chatHistoryData.length === 0 ? (
+                      <div className="text-center py-8 text-muted-foreground">
+                        <MessageSquare className="h-8 w-8 mx-auto mb-3 opacity-50" />
+                        <p className="text-sm font-medium">No conversations yet</p>
+                        <p className="text-xs mt-1">Start chatting to see your history here</p>
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-1 gap-3">
+                        {chatHistoryData.map((session) => (
+                          <div
+                            key={session.session_id}
+                            className={cn(
+                              "group relative p-4 rounded-xl cursor-pointer transition-all duration-200 border bg-background/80 hover:shadow-md",
+                              sessionId === session.session_id 
+                                ? "border-primary/50 shadow-sm ring-2 ring-primary/20 bg-primary/5" 
+                                : "border-border/60 hover:bg-muted/30 hover:border-border"
+                            )}
+                            onClick={() => loadChatSession(session.session_id)}
+                          >
+                            {/* Session Content */}
+                            <div className="pr-8">
+                              <div className="font-semibold text-sm text-foreground truncate mb-2">
+                                {session.title || 'Untitled Chat'}
+                              </div>
+                              <div className="space-y-2 text-xs text-muted-foreground">
+                                <div className="flex items-center gap-2">
+                                  <BookOpen className="h-3 w-3 flex-shrink-0" />
+                                  <span className="truncate">{session.knowledge_base_name}</span>
+                                </div>
+                                <div className="flex items-center justify-between">
+                                  <span className="flex items-center gap-1">
+                                    <MessageSquare className="h-3 w-3" />
+                                    {session.message_count} messages
+                                  </span>
+                                  <span>{new Date(session.created_at).toLocaleDateString()}</span>
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Delete Button */}
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={(e) => deleteChatSession(session.session_id, e)}
+                              className="absolute top-3 right-3 h-7 w-7 p-0 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20 opacity-60 group-hover:opacity-100 transition-all"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
+          </>
         )}
 
       </div>

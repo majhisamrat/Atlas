@@ -549,10 +549,10 @@ export default function ChatPage() {
                   <MessageSquare className="h-8 md:h-12 w-8 md:w-12 text-primary" />
                 </div>
                 <div>
-                  <h3 className="text-2xl md:text-2xl font-bold tracking-tight text-foreground">
+                  <h3 className="text-2xl md:text-xl font-bold tracking-tight text-foreground">
                     Start a New Conversation
                   </h3>
-                  <p className="text-lg md:text-base text-muted-foreground mt-2 max-w-lg leading-relaxed">
+                  <p className="text-xs md:text-base text-muted-foreground mt-2 max-w-lg leading-relaxed">
                     Ask questions about your knowledge base documents and get AI-powered insights.
                   </p>
                 </div>
@@ -568,7 +568,7 @@ export default function ChatPage() {
                         <button
                           key={i}
                           onClick={() => handleSend(suggestion)}
-                          className="p-3 md:p-5 text-left rounded-xl border border-border/80 bg-card/60 hover:bg-muted hover:border-primary/40 transition-all duration-200 text-sm md:text-base font-semibold text-muted-foreground hover:text-foreground group flex items-start justify-between gap-3 shadow-sm"
+                          className="p-3 md:p-5 text-left rounded-xl border border-border/80 bg-card/60 hover:bg-muted hover:border-primary/40 transition-all duration-200 text-xs md:text-base font-semibold text-muted-foreground hover:text-foreground group flex items-start justify-between gap-3 shadow-sm"
                         >
                           <span className="leading-relaxed text-lg md:text-sm line-clamp-3">{suggestion}</span>
                           <ArrowUpRight className="h-4 md:h-5 w-4 md:w-5 shrink-0 text-primary opacity-0 group-hover:opacity-100 transition-opacity" />

@@ -5,6 +5,10 @@
     {
       "source": "/api/:path*",
       "destination": "https://atlasrag.duckdns.org/api/:path*"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
     }
   ]
 }

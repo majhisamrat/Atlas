@@ -570,7 +570,7 @@ export default function ChatPage() {
                           onClick={() => handleSend(suggestion)}
                           className="p-3 md:p-5 text-left rounded-xl border border-border/80 bg-card/60 hover:bg-muted hover:border-primary/40 transition-all duration-200 text-xs md:text-base font-semibold text-muted-foreground hover:text-foreground group flex items-start justify-between gap-3 shadow-sm"
                         >
-                          <span className="leading-relaxed text-lg md:text-sm line-clamp-3">{suggestion}</span>
+                          <span className="leading-relaxed text-sm md:text-sm line-clamp-3">{suggestion}</span>
                           <ArrowUpRight className="h-4 md:h-5 w-4 md:w-5 shrink-0 text-primary opacity-0 group-hover:opacity-100 transition-opacity" />
                         </button>
                       ))}

@@ -412,7 +412,7 @@ export default function ChatPage() {
                   {currentSessionTitle || 'Atlas Assistant'}
                 </h2>
                 {currentSessionTitle && (
-                  <p className="text-xs text-muted-foreground font-semibold">
+                  <p className="text-xl text-muted-foreground font-semibold">
                     Atlas Assistant
                   </p>
                 )}
@@ -434,7 +434,7 @@ export default function ChatPage() {
                 title="Toggle chat history"
                 className="h-8 w-8 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted"
               >
-                <Menu className="h-4 w-4" />
+                <Menu className="h-5 w-5" />
               </Button>
 
               {/* Logo */}
@@ -444,7 +444,7 @@ export default function ChatPage() {
               </div>
 
               {/* ATLAS Text */}
-              <h2 className="font-bold text-sm tracking-tight text-foreground">
+              <h2 className="font-bold text-lg tracking-tight text-foreground">
                 ATLAS
               </h2>
             </div>
@@ -468,7 +468,7 @@ export default function ChatPage() {
                       setSelectedKb('all');
                       setMobileFilterOpen(false);
                     }}
-                    className="w-full text-left px-4 py-2 hover:bg-muted flex items-center justify-between text-sm transition-colors"
+                    className="w-full text-left px-4 py-2 hover:bg-muted flex items-center justify-between text-lg transition-colors"
                   >
                     <span>All Knowledge Bases</span>
                     {selectedKb === 'all' && <Check className="h-4 w-4 text-primary" />}
@@ -480,7 +480,7 @@ export default function ChatPage() {
                         setSelectedKb(kb.id);
                         setMobileFilterOpen(false);
                       }}
-                      className="w-full text-left px-4 py-2 hover:bg-muted flex items-center justify-between text-sm transition-colors"
+                      className="w-full text-left px-4 py-2 hover:bg-muted flex items-center justify-between text-lg transition-colors"
                     >
                       <span className="truncate">{kb.display_name}</span>
                       {selectedKb === kb.id && <Check className="h-4 w-4 text-primary" />}
@@ -503,7 +503,7 @@ export default function ChatPage() {
 
             {/* Knowledge Base Filter (Desktop only) */}
             <Select value={selectedKb} onValueChange={setSelectedKb}>
-              <SelectTrigger className="hidden md:flex w-[clamp(15.625rem,15.625rem,19.53125rem)] h-10 text-xs font-bold rounded-xl bg-background/80 border-border">
+              <SelectTrigger className="hidden md:flex w-[clamp(15.625rem,15.625rem,19.53125rem)] h-10 text-lg font-bold rounded-xl bg-background/80 border-border">
                 <SelectValue placeholder="All Knowledge Bases" />
               </SelectTrigger>
               <SelectContent>
@@ -520,7 +520,8 @@ export default function ChatPage() {
                 variant="outline"
                 size="sm"
                 onClick={startNewChat}
-                className="gap-2 h-9 md:h-10 text-xs font-bold rounded-xl border-border hover:bg-muted px-2 md:px-4"
+                className="gap-2 h-9 md:h-10 text-lg
+                 font-bold rounded-xl border-border hover:bg-muted px-2 md:px-4"
               >
                 <Plus className="h-4 w-4" />
                 <span className="hidden md:inline">New Chat</span>
@@ -548,10 +549,10 @@ export default function ChatPage() {
                   <MessageSquare className="h-8 md:h-12 w-8 md:w-12 text-primary" />
                 </div>
                 <div>
-                  <h3 className="text-xl md:text-2xl font-bold tracking-tight text-foreground">
+                  <h3 className="text-2xl md:text-2xl font-bold tracking-tight text-foreground">
                     Start a New Conversation
                   </h3>
-                  <p className="text-sm md:text-base text-muted-foreground mt-2 max-w-lg leading-relaxed">
+                  <p className="text-lg md:text-base text-muted-foreground mt-2 max-w-lg leading-relaxed">
                     Ask questions about your knowledge base documents and get AI-powered insights.
                   </p>
                 </div>
@@ -559,7 +560,7 @@ export default function ChatPage() {
                 {/* Prompt Suggestions - Hidden when keyboard open on mobile */}
                 {!keyboardOpen && (
                   <div className="w-full space-y-4">
-                    <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                    <p className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
                       Suggested Prompts
                     </p>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4 max-w-2xl mx-auto px-2 md:px-0">
@@ -569,7 +570,7 @@ export default function ChatPage() {
                           onClick={() => handleSend(suggestion)}
                           className="p-3 md:p-5 text-left rounded-xl border border-border/80 bg-card/60 hover:bg-muted hover:border-primary/40 transition-all duration-200 text-sm md:text-base font-semibold text-muted-foreground hover:text-foreground group flex items-start justify-between gap-3 shadow-sm"
                         >
-                          <span className="leading-relaxed text-xs md:text-sm line-clamp-3">{suggestion}</span>
+                          <span className="leading-relaxed text-lg md:text-sm line-clamp-3">{suggestion}</span>
                           <ArrowUpRight className="h-4 md:h-5 w-4 md:w-5 shrink-0 text-primary opacity-0 group-hover:opacity-100 transition-opacity" />
                         </button>
                       ))}
@@ -592,7 +593,7 @@ export default function ChatPage() {
                     <div className={`max-w-[85%] md:max-w-[80%] space-y-2 md:space-y-3 ${msg.role === 'user' ? 'order-first' : ''}`}>
                       {/* Message Card */}
                       <Card
-                        className={`p-4 md:p-6 lg:p-8 rounded-2xl text-sm md:text-lg lg:text-xl leading-relaxed font-medium ${
+                        className={`p-4 md:p-6 lg:p-8 rounded-2xl text-lg md:text-lg lg:text-xl leading-relaxed font-medium ${
                           msg.role === 'user'
                             ? 'bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white border-transparent shadow-md shadow-purple-500/25'
                             : 'bg-card text-foreground border border-border/80 shadow-sm'
@@ -648,7 +649,7 @@ export default function ChatPage() {
                     <Brain className="h-4 md:h-5 w-4 md:w-5 animate-spin-slow" />
                   </AvatarFallback>
                 </Avatar>
-                <Card className="p-3 md:p-4 rounded-xl bg-card border border-border flex items-center gap-3 text-xs md:text-sm font-semibold text-muted-foreground">
+                <Card className="p-3 md:p-4 rounded-xl bg-card border border-border flex items-center gap-3 text-sm md:text-sm font-semibold text-muted-foreground">
                   <Loader2 className="h-3 md:h-4 w-3 md:w-4 text-primary animate-spin shrink-0" />
                   <span className="animate-pulse">Thinking...</span>
                 </Card>
@@ -677,7 +678,7 @@ export default function ChatPage() {
                       : 'Ask anything across your knowledge bases...'
                   }
                   disabled={rateLimitInfo?.isLimitReached}
-                  className="flex-1 border-0 bg-transparent shadow-none focus-visible:ring-0 resize-none py-1.5 md:py-1.5 lg:py-1.5 px-0 text-sm md:text-sm lg:text-base font-medium placeholder:text-muted-foreground text-foreground disabled:opacity-50 disabled:cursor-not-allowed min-h-[40px] md:min-h-[40px] lg:min-h-[40px] overflow-y-auto break-words whitespace-normal"
+                  className="flex-1 border-0 bg-transparent shadow-none focus-visible:ring-0 resize-none py-3 md:py-3 lg:py-3 pl-2 md:pl-3 lg:pl-4 text-lg md:text-sm lg:text-base font-medium placeholder:text-muted-foreground text-foreground disabled:opacity-50 disabled:cursor-not-allowed min-h-[40px] md:min-h-[40px] lg:min-h-[40px] overflow-y-auto break-words whitespace-normal"
                   rows={1}
                   spellCheck="true"
                 />
@@ -691,7 +692,7 @@ export default function ChatPage() {
                   {chatMutation.isPending ? (
                     <Loader2 className="h-4 md:h-4 lg:h-4 w-4 md:w-4 lg:w-4 animate-spin" />
                   ) : (
-                    <Send className="h-4 md:h-4 lg:h-4 w-4 md:w-4 lg:w-4" />
+                    <Send className="h-5 md:h-5 lg:h-5 w-5 md:w-5 lg:w-5" />
                   )}
                 </Button>
               </div>
@@ -713,7 +714,7 @@ export default function ChatPage() {
                 <div className="p-6">
                   <div className="max-w-4xl mx-auto">
                     <div className="flex items-center justify-between mb-4">
-                      <h3 className="font-bold text-base text-foreground">Recent Conversations</h3>
+                      <h3 className="font-bold text-lg text-foreground">Recent Conversations</h3>
                       <div className="flex items-center gap-2">
                         <Button
                           variant="ghost"
@@ -743,8 +744,8 @@ export default function ChatPage() {
                     ) : chatHistoryData.length === 0 ? (
                       <div className="text-center py-8 text-muted-foreground">
                         <MessageSquare className="h-8 w-8 mx-auto mb-3 opacity-50" />
-                        <p className="text-sm font-medium">No conversations yet</p>
-                        <p className="text-xs mt-1">Start chatting to see your history here</p>
+                        <p className="text-lg font-medium">No conversations yet</p>
+                        <p className="text-sm mt-1">Start chatting to see your history here</p>
                       </div>
                     ) : (
                       <div className="grid grid-cols-1 gap-3">

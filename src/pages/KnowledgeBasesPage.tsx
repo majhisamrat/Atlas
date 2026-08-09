@@ -58,17 +58,17 @@ export default function KnowledgeBasesPage() {
           </DialogTrigger>
           <DialogContent className="max-w-xl p-8">
             <DialogHeader>
-              <DialogTitle className="flex items-center gap-2.5 text-xl font-bold">
+              <DialogTitle className="flex items-center gap-2.5 text-2xl font-bold">
                 <Database className="h-6 w-6 text-primary" />
                 Create Knowledge Base
               </DialogTitle>
-              <DialogDescription className="text-sm">
+              <DialogDescription className="text-lg">
                 A knowledge base groups related documents for focused semantic search and AI chat.
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-5 py-3">
               <div className="space-y-2">
-                <Label htmlFor="kb-name" className="text-sm font-bold">Identifier Name</Label>
+                <Label htmlFor="kb-name" className="text-lg font-bold">Identifier Name</Label>
                 <Input
                   id="kb-name"
                   placeholder="e.g. sales_2026"
@@ -76,10 +76,10 @@ export default function KnowledgeBasesPage() {
                   onChange={(e) => setForm((p) => ({ ...p, name: e.target.value.toLowerCase().replace(/\s+/g, '_') }))}
                   className="h-12 text-base"
                 />
-                <p className="text-xs text-muted-foreground font-medium">Unique identifier used in API requests (no spaces)</p>
+                <p className="text-sm text-muted-foreground font-medium">Unique identifier used in API requests (no spaces)</p>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="kb-display" className="text-sm font-bold">Display Title</Label>
+                <Label htmlFor="kb-display" className="text-lg font-bold">Display Title</Label>
                 <Input
                   id="kb-display"
                   placeholder="e.g. Sales 2026 Reports"
@@ -89,7 +89,7 @@ export default function KnowledgeBasesPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="kb-desc" className="text-sm font-bold">Description (Optional)</Label>
+                <Label htmlFor="kb-desc" className="text-lg font-bold">Description (Optional)</Label>
                 <Input
                   id="kb-desc"
                   placeholder="Internal documentation and client invoices..."
@@ -148,7 +148,7 @@ export default function KnowledgeBasesPage() {
                   {kb.description ? (
                     <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">{kb.description}</p>
                   ) : (
-                    <p className="text-sm text-muted-foreground/60 italic">No description provided</p>
+                    <p className="text-sm text-muted-foreground/60 italic  ">No description provided</p>
                   )}
 
                   <div className="flex items-center justify-between pt-4 border-t border-border text-sm font-semibold text-muted-foreground">

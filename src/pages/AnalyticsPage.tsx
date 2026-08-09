@@ -108,7 +108,7 @@ export default function AnalyticsPage() {
 
           {/* Range Selector */}
           <Select value={selectedOption} onValueChange={handleSelectChange}>
-            <SelectTrigger className="w-[clamp(14.84375rem,14.84375rem,18.55859375rem)] h-11 text-xs font-bold rounded-xl bg-card border-border shadow-sm">
+            <SelectTrigger className="w-[clamp(14.84375rem,14.84375rem,18.55859375rem)] h-11 text-sm font-bold rounded-xl bg-card border-border shadow-sm">
               <SelectValue placeholder="Select Timeframe" />
             </SelectTrigger>
             <SelectContent>
@@ -140,14 +140,14 @@ export default function AnalyticsPage() {
               <CalendarIcon className="h-6 w-6 text-primary" />
               Custom Analytics Date Range
             </DialogTitle>
-            <DialogDescription className="text-sm font-medium text-muted-foreground">
+            <DialogDescription className="text-lg font-medium text-muted-foreground">
               Filter workspace performance, latencies, and usage metrics between specific dates.
             </DialogDescription>
           </DialogHeader>
 
           {/* Quick Presets */}
           <div className="space-y-2.5">
-            <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+            <Label className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
               Quick Timeframe Presets
             </Label>
             <div className="grid grid-cols-3 gap-3">
@@ -163,7 +163,7 @@ export default function AnalyticsPage() {
                   key={p.days}
                   type="button"
                   onClick={() => applyPreset(p.days)}
-                  className="py-2.5 px-4 text-xs font-extrabold rounded-2xl border border-border bg-muted/40 hover:bg-primary/10 hover:border-primary/40 text-muted-foreground hover:text-primary transition-all shadow-sm"
+                  className="py-2.5 px-4 text-sm font-extrabold rounded-2xl border border-border bg-muted/40 hover:bg-primary/10 hover:border-primary/40 text-muted-foreground hover:text-primary transition-all shadow-sm"
                 >
                   {p.label}
                 </button>
@@ -176,7 +176,7 @@ export default function AnalyticsPage() {
           {/* Custom Date Inputs */}
           <div className="grid grid-cols-2 gap-5">
             <div className="space-y-2">
-              <Label htmlFor="start-date" className="text-xs font-extrabold text-foreground">
+              <Label htmlFor="start-date" className="text-sm font-extrabold text-foreground">
                 From Date
               </Label>
               <Input
@@ -188,7 +188,7 @@ export default function AnalyticsPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="end-date" className="text-xs font-extrabold text-foreground">
+              <Label htmlFor="end-date" className="text-sm font-extrabold text-foreground">
                 To Date
               </Label>
               <Input
@@ -214,13 +214,13 @@ export default function AnalyticsPage() {
             <Button
               variant="outline"
               onClick={() => setIsCalendarOpen(false)}
-              className="rounded-2xl h-11 text-xs font-extrabold border-border px-6"
+              className="rounded-2xl h-11 text-lg font-extrabold border-border px-6"
             >
               Cancel
             </Button>
             <Button
               onClick={handleApplyCustomDates}
-              className="gap-2 rounded-2xl h-11 text-xs font-black shadow-lg shadow-primary/25 px-7"
+              className="gap-2 rounded-2xl h-11 text-lg font-black shadow-lg shadow-primary/25 px-7"
             >
               <Check className="h-4 w-4" />
               Apply Date Filter
@@ -238,7 +238,7 @@ export default function AnalyticsPage() {
               <Search className="h-5 w-5" />
             </div>
             <CardHeader className="flex flex-row items-start justify-start p-0 pb-6 space-y-0">
-              <CardTitle className="text-xs font-bold uppercase tracking-wider text-muted-foreground pr-14">
+              <CardTitle className="text-sm font-bold uppercase tracking-wider text-muted-foreground pr-14">
                 Total Queries
               </CardTitle>
             </CardHeader>
@@ -256,7 +256,7 @@ export default function AnalyticsPage() {
               <Clock className="h-5 w-5" />
             </div>
             <CardHeader className="flex flex-row items-start justify-start p-0 pb-6 space-y-0">
-              <CardTitle className="text-xs font-bold uppercase tracking-wider text-muted-foreground pr-14">
+              <CardTitle className="text-sm font-bold uppercase tracking-wider text-muted-foreground pr-14">
                 Avg Latency
               </CardTitle>
             </CardHeader>
@@ -274,7 +274,7 @@ export default function AnalyticsPage() {
               <Activity className="h-5 w-5" />
             </div>
             <CardHeader className="flex flex-row items-start justify-start p-0 pb-6 space-y-0">
-              <CardTitle className="text-xs font-bold uppercase tracking-wider text-muted-foreground pr-14">
+              <CardTitle className="text-sm font-bold uppercase tracking-wider text-muted-foreground pr-14">
                 Total Uploads
               </CardTitle>
             </CardHeader>
@@ -292,7 +292,7 @@ export default function AnalyticsPage() {
               <TrendingUp className="h-5 w-5" />
             </div>
             <CardHeader className="flex flex-row items-start justify-start p-0 pb-6 space-y-0">
-              <CardTitle className="text-xs font-bold uppercase tracking-wider text-muted-foreground pr-14">
+              <CardTitle className="text-sm font-bold uppercase tracking-wider text-muted-foreground pr-14">
                 Pages Indexed
               </CardTitle>
             </CardHeader>
@@ -318,19 +318,19 @@ export default function AnalyticsPage() {
           <CardContent className="p-0 space-y-6">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div className="text-center p-4 rounded-2xl bg-muted/50 border border-border">
-                <p className="text-xs uppercase font-extrabold text-muted-foreground">p50 Latency</p>
+                <p className="text-sm uppercase font-extrabold text-muted-foreground">p50 Latency</p>
                 <p className="text-2xl font-black mt-2 text-foreground">{formatMs(queryMetrics?.p50_latency_ms ?? 0)}</p>
               </div>
               <div className="text-center p-4 rounded-2xl bg-muted/50 border border-border">
-                <p className="text-xs uppercase font-extrabold text-muted-foreground">p95 Latency</p>
+                <p className="text-sm uppercase font-extrabold text-muted-foreground">p95 Latency</p>
                 <p className="text-2xl font-black mt-2 text-foreground">{formatMs(queryMetrics?.p95_latency_ms ?? 0)}</p>
               </div>
               <div className="text-center p-4 rounded-2xl bg-muted/50 border border-border">
-                <p className="text-xs uppercase font-extrabold text-muted-foreground">p99 Latency</p>
+                <p className="text-sm uppercase font-extrabold text-muted-foreground">p99 Latency</p>
                 <p className="text-2xl font-black mt-2 text-foreground">{formatMs(queryMetrics?.p99_latency_ms ?? 0)}</p>
               </div>
               <div className="text-center p-4 rounded-2xl bg-muted/50 border border-border">
-                <p className="text-xs uppercase font-extrabold text-muted-foreground">Avg Retrieved Chunks</p>
+                <p className="text-sm uppercase font-extrabold text-muted-foreground">Avg Retrieved Chunks</p>
                 <p className="text-2xl font-black mt-2 text-foreground">
                   {queryMetrics?.avg_retrieved_chunks != null ? queryMetrics.avg_retrieved_chunks.toFixed(1) : '0.0'}
                 </p>
@@ -350,19 +350,19 @@ export default function AnalyticsPage() {
           <CardContent className="p-0 space-y-6">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div className="text-center p-4 rounded-2xl bg-muted/50 border border-border">
-                <p className="text-xs uppercase font-extrabold text-muted-foreground">Avg Proc Time</p>
+                <p className="text-sm uppercase font-extrabold text-muted-foreground">Avg Proc Time</p>
                 <p className="text-2xl font-black mt-2 text-foreground">{formatMs(uploadMetrics?.avg_processing_time_ms ?? 0)}</p>
               </div>
               <div className="text-center p-4 rounded-2xl bg-muted/50 border border-border">
-                <p className="text-xs uppercase font-extrabold text-muted-foreground">p50 Proc Time</p>
+                <p className="text-sm uppercase font-extrabold text-muted-foreground">p50 Proc Time</p>
                 <p className="text-2xl font-black mt-2 text-foreground">{formatMs(uploadMetrics?.p50_processing_time_ms ?? 0)}</p>
               </div>
               <div className="text-center p-4 rounded-2xl bg-muted/50 border border-border">
-                <p className="text-xs uppercase font-extrabold text-muted-foreground">p95 Proc Time</p>
+                <p className="text-sm uppercase font-extrabold text-muted-foreground">p95 Proc Time</p>
                 <p className="text-2xl font-black mt-2 text-foreground">{formatMs(uploadMetrics?.p95_processing_time_ms ?? 0)}</p>
               </div>
               <div className="text-center p-4 rounded-2xl bg-muted/50 border border-border">
-                <p className="text-xs uppercase font-extrabold text-muted-foreground">Failed Uploads</p>
+                <p className="text-sm uppercase font-extrabold text-muted-foreground">Failed Uploads</p>
                 <p className="text-2xl font-black mt-2 text-foreground">
                   {uploadMetrics?.failed_uploads ?? 0}
                 </p>
@@ -384,25 +384,25 @@ export default function AnalyticsPage() {
           <CardContent className="p-0">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
               <div className="p-5 rounded-2xl bg-muted/40 border border-border">
-                <p className="text-xs text-muted-foreground uppercase font-extrabold">Chat Messages</p>
+                <p className="text-sm text-muted-foreground uppercase font-extrabold">Chat Messages</p>
                 <p className="text-3xl font-black text-foreground mt-2">
                   {usageSummary?.total_chat_messages?.toLocaleString() ?? 0}
                 </p>
               </div>
               <div className="p-5 rounded-2xl bg-muted/40 border border-border">
-                <p className="text-xs text-muted-foreground uppercase font-extrabold">Total Vectors</p>
+                <p className="text-sm text-muted-foreground uppercase font-extrabold">Total Vectors</p>
                 <p className="text-3xl font-black text-foreground mt-2">
                   {usageSummary?.total_vectors?.toLocaleString() ?? 0}
                 </p>
               </div>
               <div className="p-5 rounded-2xl bg-muted/40 border border-border">
-                <p className="text-xs text-muted-foreground uppercase font-extrabold">Queries / Day</p>
+                <p className="text-sm text-muted-foreground uppercase font-extrabold">Queries / Day</p>
                 <p className="text-3xl font-black text-foreground mt-2">
                   {usageSummary?.queries_per_day != null ? usageSummary.queries_per_day.toFixed(1) : '0.0'}
                 </p>
               </div>
               <div className="p-5 rounded-2xl bg-muted/40 border border-border">
-                <p className="text-xs text-muted-foreground uppercase font-extrabold">Messages / Day</p>
+                <p className="text-sm text-muted-foreground uppercase font-extrabold">Messages / Day</p>
                 <p className="text-3xl font-black text-foreground mt-2">
                   {usageSummary?.messages_per_day != null ? usageSummary.messages_per_day.toFixed(1) : '0.0'}
                 </p>

@@ -58,7 +58,7 @@ export default function DashboardPage() {
                   <Icon className="h-4 md:h-6 w-4 md:w-6" />
                 </div>
                 <CardHeader className="flex flex-col items-start justify-start p-0 pb-6 md:pb-8 space-y-0">
-                  <CardTitle className="text-xs md:text-xs font-black uppercase tracking-wider text-muted-foreground pr-14">
+                  <CardTitle className="text-lg md:text-xs font-black uppercase tracking-wider text-muted-foreground pr-14">
                     {stat.label}
                   </CardTitle>
                 </CardHeader>
@@ -80,7 +80,7 @@ export default function DashboardPage() {
             <Sparkles className="h-6 w-6 text-primary" />
             <h2 className="text-2xl font-black tracking-tight text-foreground">Active Knowledge Bases</h2>
           </div>
-          <Button variant="ghost" size="sm" onClick={() => navigate('/knowledge')} className="text-base font-extrabold text-muted-foreground gap-1.5 hover:text-foreground">
+          <Button variant="ghost" size="sm" onClick={() => navigate('/knowledge')} className="text-base font-extrabold text-muted-foreground gap-1.5 hover:text-foreground ">
             View All <ChevronRight className="h-5 w-5" />
           </Button>
         </div>
@@ -104,11 +104,11 @@ export default function DashboardPage() {
                   <CardHeader className="p-0 pb-5">
                     <div className="flex items-start justify-between">
                       <div className="space-y-1.5">
-                        <CardTitle className="text-xl font-black group-hover:text-primary transition-colors flex items-center gap-2.5 text-foreground">
+                        <CardTitle className="text-2xl font-black group-hover:text-primary transition-colors flex items-center gap-2.5 text-foreground">
                           {kb.display_name}
                           <ArrowUpRight className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity text-primary" />
                         </CardTitle>
-                        <p className="text-xs text-muted-foreground font-mono font-bold">{kb.name}</p>
+                        <p className="text-sm text-muted-foreground font-mono font-bold">{kb.name}</p>
                       </div>
                       <Badge variant={kb.status === 'active' ? 'success' : 'secondary'} className="text-xs px-3.5 py-1.5 font-black uppercase tracking-wider">
                         {kb.status}
@@ -118,19 +118,19 @@ export default function DashboardPage() {
                   <CardContent className="p-0">
                     <div className="grid grid-cols-2 gap-4 p-5 rounded-2xl bg-muted/50 border border-border text-base">
                       <div>
-                        <span className="text-muted-foreground block text-xs uppercase font-extrabold">Uploads</span>
+                        <span className="text-muted-foreground block text-sm uppercase font-extrabold">Uploads</span>
                         <span className="font-black text-lg text-foreground">{kb.statistics?.total_uploads ?? 0}</span>
                       </div>
                       <div>
-                        <span className="text-muted-foreground block text-xs uppercase font-extrabold">Queries</span>
+                        <span className="text-muted-foreground block text-sm uppercase font-extrabold">Queries</span>
                         <span className="font-black text-lg text-foreground">{kb.statistics?.query_count ?? 0}</span>
                       </div>
                       <div>
-                        <span className="text-muted-foreground block text-xs uppercase font-extrabold">Vectors</span>
+                        <span className="text-muted-foreground block text-sm uppercase font-extrabold">Vectors</span>
                         <span className="font-black text-lg text-foreground">{kb.statistics?.total_vectors ?? 0}</span>
                       </div>
                       <div>
-                        <span className="text-muted-foreground block text-xs uppercase font-extrabold">Pages</span>
+                        <span className="text-muted-foreground block text-sm uppercase font-extrabold">Pages</span>
                         <span className="font-black text-lg text-foreground">{kb.statistics?.total_pages ?? 0}</span>
                       </div>
                     </div>

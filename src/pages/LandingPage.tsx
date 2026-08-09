@@ -22,10 +22,10 @@ export default function LandingPage() {
         <div className="relative flex h-24 w-full items-center justify-between px-6 lg:px-12 xl:px-16">
           <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="flex items-center gap-3" aria-label="Atlas home">
             <span className="grid h-10 w-10 place-items-center rounded-2xl bg-[#103d88] text-white shadow-lg shadow-blue-950/15"><Brain className="h-5 w-5" /></span>
-            <span className="brand-atlas text-3xl leading-none">ATLAS</span>
+            <span className="brand-atlas text-4xl leading-none">ATLAS</span>
           </button>
           
-          <nav className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-10 text-base font-bold text-[#315281] lg:flex">
+          <nav className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-10 text-xl font-bold text-[#315281] lg:flex">
             <a href="#product" className="transition hover:text-[#0d46a6]">Product</a>
             <a href="#how-it-works" className="transition hover:text-[#0d46a6]">How it works</a>
             <a href="#security" className="transition hover:text-[#0d46a6]">Security</a>
@@ -33,9 +33,9 @@ export default function LandingPage() {
           </nav>
           
           <div className="flex items-center gap-2 sm:gap-4">
-            <button className="hidden items-center gap-2 text-base font-bold text-[#315281] sm:flex"><Globe2 className="h-5 w-5" />English</button>
-            <button onClick={() => navigate('/login')} className="hidden sm:block text-sm sm:text-base font-bold text-[#082c67]">Log in</button>
-            <button onClick={start} className="rounded-full bg-[#1246a7] px-4 sm:px-7 py-2 sm:py-4 text-sm sm:text-base font-bold text-white shadow-lg shadow-blue-800/20 transition hover:-translate-y-0.5 hover:bg-[#0d398a]">Start for free</button>
+            <button className="hidden items-center gap-2 text-xl font-bold text-[#315281] sm:flex"><Globe2 className="h-5 w-5" />English</button>
+            <button onClick={() => navigate('/login')} className="hidden sm:block text-sm sm:text-xl font-bold text-[#082c67]">Log in</button>
+            <button onClick={start} className="rounded-full bg-[#1246a7] px-4 sm:px-7 py-2 sm:py-4 text-sm sm:text-xl font-bold text-white shadow-lg shadow-blue-800/20 transition hover:-translate-y-0.5 hover:bg-[#0d398a]">Start for free</button>
             
             {/* Mobile menu button */}
             <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="lg:hidden ml-2 text-[#082c67]">
@@ -60,7 +60,7 @@ export default function LandingPage() {
           <div className="absolute inset-x-0 top-0 -z-0 h-[620px] bg-[radial-gradient(circle_at_78%_42%,rgba(133,190,255,.34),transparent_30%),radial-gradient(circle_at_20%_80%,rgba(217,195,255,.35),transparent_27%)]" />
           <div className="relative z-10 mx-auto grid max-w-7xl items-center gap-12 lg:grid-cols-[.9fr_1.1fr] lg:gap-14">
             <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: .65 }}>
-              <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-sky-200 bg-white/80 px-3 py-1.5 text-xs font-bold text-[#2066b7] shadow-sm"><Sparkles className="h-3.5 w-3.5" />Enterprise knowledge, beautifully simple</div>
+              <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-sky-200 bg-white/80 px-3 py-1.5 text-lg font-bold text-[#2066b7] shadow-sm"><Sparkles className="h-3.5 w-3.5" />Enterprise knowledge, beautifully simple</div>
               <h1 className="font-display max-w-xl text-5xl font-black leading-[.98] text-[#06285f] sm:text-6xl lg:text-7xl">Every answer begins with your <span className="text-[#195bc0]">best knowledge.</span></h1>
               <p className="mt-7 max-w-lg text-lg leading-8 text-[#526b91]">Give your team one calm, capable place to turn trusted documents into clear answers, decisions, and momentum.</p>
               <div className="mt-9 flex flex-wrap items-center gap-3">
@@ -84,7 +84,7 @@ export default function LandingPage() {
           </div>
         </section>
 
-        <section className="border-y border-sky-100 bg-[#c9ebff] px-5 py-10"><div className="mx-auto max-w-6xl"><p className="text-center text-xs font-bold uppercase tracking-[.18em] text-[#4979af]">Built for teams that value clear thinking</p><div className="mt-7 flex flex-wrap items-center justify-center gap-x-10 gap-y-4 text-xl font-black tracking-tight text-white/95 sm:text-2xl">{trusted.map(name => <span key={name}>{name}</span>)}</div></div></section>
+        <section className="border-y border-sky-100 bg-[#c9ebff] px-5 py-10"><div className="mx-auto max-w-6xl"><p className="text-center text-xl font-bold uppercase tracking-[.18em] text-[#4979af]">Built for teams that value clear thinking</p><div className="mt-7 flex flex-wrap items-center justify-center gap-x-10 gap-y-4 text-xl font-black tracking-tight text-[#082c67] sm:text-2xl">{trusted.map(name => <span key={name}>{name}</span>)}</div></div></section>
 
         <section id="product" className="mx-auto max-w-7xl px-5 py-24 lg:py-32"><div className="max-w-2xl"><p className="app-kicker">An intelligent system of record</p><h2 className="font-display mt-3 text-4xl font-black leading-tight text-[#06285f] sm:text-5xl">Knowledge that feels less like a library, and more like a superpower.</h2></div><div className="mt-12 grid gap-5 lg:grid-cols-3"><Feature icon={Search} title="Ask with confidence" text="Conversational answers grounded in your actual source material, every time." color="bg-[#dbf5ff] text-sky-700" /><Feature icon={FileText} title="Shape the signal" text="Bring documents, reports and team knowledge into one structured home." color="bg-[#f4e8ff] text-violet-700" /><Feature icon={Sparkles} title="See what matters" text="Turn your workspace activity into patterns your whole team can act on." color="bg-[#ffeaf3] text-rose-700" /></div></section>
 
@@ -94,7 +94,7 @@ export default function LandingPage() {
 
         <DownloadAppSection />
       </main>
-      <footer className="border-t border-sky-100 bg-white px-5 py-8"><div className="mx-auto flex max-w-7xl flex-col justify-between gap-3 text-sm text-[#6680a6] sm:flex-row"><span className="font-display text-lg font-black text-[#082c67]">ATLAS</span><span>© 2026 Atlas Intelligence. Built for better questions.</span></div></footer>
+      <footer className="border-t border-sky-100 bg-white px-5 py-8"><div className="mx-auto flex max-w-7xl flex-col justify-between gap-3 text-lg text-[#6680a6] sm:flex-row"><span className="font-display text-xl font-black text-[#082c67]">ATLAS</span><span>© 2026 Atlas Intelligence. Built for better questions.</span></div></footer>
     </div>
   );
 }

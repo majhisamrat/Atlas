@@ -110,9 +110,9 @@ export default function LoginPage() {
     <div className="min-h-screen bg-[#f8fcff] text-foreground selection:bg-primary/20 selection:text-primary lg:grid lg:grid-cols-2">
       <section className="relative hidden overflow-hidden bg-[#082d69] p-12 text-white lg:flex lg:flex-col lg:justify-between">
         <div className="absolute inset-0 opacity-80 aurora-panel mix-blend-screen" />
-        <div className="relative flex items-center gap-3"><span className="grid h-12 w-12 place-items-center rounded-2xl bg-white text-[#0d479f]"><Brain className="h-6 w-6" /></span><span className="brand-atlas text-3xl leading-none">ATLAS</span></div>
-        <div className="relative max-w-xl"><div className="mb-6 grid h-14 w-14 place-items-center rounded-2xl bg-white/15 backdrop-blur"><Quote className="h-7 w-7 text-sky-200" /></div><h1 className="font-display text-5xl font-black leading-[1.02]">Bring calm clarity to your team’s most important work.</h1><p className="mt-6 max-w-md text-lg leading-8 text-blue-100">A considered workspace for every document, question, and decision.</p><div className="mt-10 flex gap-3"><div className="rounded-2xl bg-white/15 p-4 backdrop-blur"><FileText className="h-5 w-5 text-sky-200" /><p className="mt-5 text-sm font-bold">Connected knowledge</p></div><div className="rounded-2xl bg-white/15 p-4 backdrop-blur"><MessageSquare className="h-5 w-5 text-pink-200" /><p className="mt-5 text-sm font-bold">Grounded answers</p></div></div></div>
-        <div className="relative text-sm font-semibold text-blue-200">Trusted by teams who need answers they can stand behind.</div>
+        <div className="relative flex items-center gap-3"><span className="grid h-12 w-12 place-items-center rounded-3xl bg-white text-[#0d479f]"><Brain className="h-6 w-6" /></span><span className="brand-atlas text-4xl leading-none text-[#082c67] ">ATLAS</span></div>
+        <div className="relative max-w-xl"><div className="mb-6 grid h-14 w-14 place-items-center rounded-2xl bg-white/15 backdrop-blur"><Quote className="h-7 w-7 text-sky-900" /></div><h1 className="font-display text-5xl font-black leading-[1.02] text-[#06285f]">Bring calm clarity to your team’s most important work.</h1><p className="mt-6 max-w-md text-lg leading-8 text-blue-900">A considered workspace for every document, question, and decision.</p><div className="mt-10 flex gap-3"><div className="rounded-2xl bg-white/15 p-4 backdrop-blur"><FileText className="h-5 w-9 text-slate-700" /><p className="mt-5 text-xl font-bold text-blue-900  ">Connected knowledge</p></div><div className="rounded-2xl bg-white/15 p-4 backdrop-blur"><MessageSquare className="h-5 w-9 text-pink-900" /><p className="mt-5 text-xl font-bold text-blue-900">Grounded answers</p></div></div></div>
+        <div className="relative text-xl font-semibold text-slate-700">Trusted by teams who need answers they can stand behind.</div>
       </section>
       <section className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[linear-gradient(180deg,#8bd0f7_0%,#dff3ff_43%,#ffffff_100%)] p-4 sm:p-6 md:p-10">
         <div className="absolute -right-28 -top-28 h-96 w-96 rounded-full bg-sky-100/60 blur-3xl" /><div className="absolute -bottom-32 -left-24 h-80 w-80 rounded-full bg-white/80 blur-3xl" />
@@ -120,14 +120,14 @@ export default function LoginPage() {
         {/* Logo and Name - Top Left (Mobile only) */}
         <Link to="/landing" className="absolute -top-16 left-0 mb-4 flex items-center gap-2 md:hidden">
           <span className="grid h-9 w-9 place-items-center rounded-xl bg-[#103d88] text-white">
-            <Brain className="h-4 w-4" />
+            <Brain className="h-5 w-5" />
           </span>
-          <span className="brand-atlas text-xl leading-none text-[#082c67]">ATLAS</span>
+          <span className="brand-atlas text-3xl leading-none text-[#082c67]">ATLAS</span>
         </Link>
         
         <div className="mb-6 space-y-1.5">
-          <h1 className="font-display text-3xl md:text-5xl font-black text-[#06285f]">Sign in</h1>
-          <p className="text-sm md:text-lg text-[#365c89]">Access your Atlas workspace.</p>
+          <h1 className="font-display text-3xl md:text-6xl font-black text-[#06285f]">Sign in</h1>
+          <p className="text-lg md:text-lg text-[#365c89]">Access your Atlas workspace.</p>
         </div>
         <Card className="border border-white/70 bg-white/72 p-5 md:p-8 lg:p-10 shadow-[0_24px_60px_-35px_rgba(11,53,111,.30)] backdrop-blur sm:p-8 rounded-[1.8rem]">
           <CardHeader className="sr-only"><CardTitle>Sign in</CardTitle><CardDescription>Enter your credentials</CardDescription></CardHeader>
@@ -143,11 +143,11 @@ export default function LoginPage() {
               <span className="grid h-5 md:h-6 w-5 md:w-6 place-items-center rounded-full bg-white text-sm md:text-base font-black text-[#1246b8]">G</span>
               {isLoading ? 'Signing in...' : 'Continue with Google'}
             </button>
-            <div className="my-5 md:my-7 flex items-center gap-3 text-xs md:text-sm font-medium text-[#4f6683]"><span className="h-px flex-1 bg-sky-200/80" />or<span className="h-px flex-1 bg-sky-200/80" /></div>
+            <div className="my-5 md:my-7 flex items-center gap-3 text-sm md:text-sm font-medium text-[#4f6683]"><span className="h-px flex-1 bg-sky-200/80" />or<span className="h-px flex-1 bg-sky-200/80" /></div>
 
             <form onSubmit={handleSubmit} className="space-y-5 md:space-y-7">
               <div className="space-y-2">
-                <Label htmlFor="email" className="text-sm md:text-base font-bold text-[#173a72]">Work email</Label>
+                <Label htmlFor="email" className="text-lg md:text-base font-bold text-[#173a72]">Work email</Label>
                 <div className="relative flex items-center">
                   <Mail className="absolute left-3 md:left-4 z-10 h-4 md:h-5 w-4 md:w-5 text-muted-foreground pointer-events-none" />
                   <Input
@@ -161,7 +161,7 @@ export default function LoginPage() {
                       backgroundColor: '#e0f2fe !important',
                       color: '#000000 !important',
                     }}
-                    className="h-11 md:h-14 text-sm md:text-lg font-medium rounded-xl border-sky-200 focus-visible:ring-[#2465bf] bg-sky-100 text-black placeholder:text-gray-600"
+                    className="h-11 md:h-14 text-lg md:text-lg font-medium rounded-xl border-sky-200 focus-visible:ring-[#2465bf] bg-sky-100 text-black placeholder:text-gray-600"
                     required
                   />
                 </div>
@@ -169,8 +169,8 @@ export default function LoginPage() {
 
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <Label htmlFor="password" className="text-sm md:text-base font-bold text-[#173a72]">Password</Label>
-                  <Link to="/forgot-password" className="text-xs md:text-sm font-semibold text-[#1246b8] hover:underline">
+                  <Label htmlFor="password" className="text-lg md:text-base font-bold text-[#173a72]">Password</Label>
+                  <Link to="/forgot-password" className="text-sm md:text-sm font-semibold text-[#1246b8] hover:underline">
                     Forgot Password?
                   </Link>
                 </div>
@@ -188,7 +188,7 @@ export default function LoginPage() {
                       backgroundColor: '#e0f2fe !important',
                       color: '#000000 !important',
                     }}
-                    className="h-11 md:h-14 text-sm md:text-lg font-medium rounded-xl border-sky-200 focus-visible:ring-[#2465bf] bg-sky-100 text-black placeholder:text-gray-600"
+                    className="h-11 md:h-14 text-lg md:text-lg font-medium rounded-xl border-sky-200 focus-visible:ring-[#2465bf] bg-sky-100 text-black placeholder:text-gray-600"
                     required
                   />
                   <button
@@ -217,7 +217,7 @@ export default function LoginPage() {
               </Button>
             </form>
 
-            <div className="mt-5 text-center text-sm md:text-base font-semibold text-[#425b7c]">
+            <div className="mt-5 text-center text-lg md:text-base font-semibold text-[#425b7c]">
               Don't have an account?{' '}
               <Link to="/register" className="font-extrabold text-primary hover:underline">
                 Create Account

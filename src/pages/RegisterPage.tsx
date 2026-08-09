@@ -132,7 +132,7 @@ export default function RegisterPage() {
           <h1 className="text-2xl md:text-4xl lg:text-5xl font-black tracking-tight text-foreground">
             Create Your Account
           </h1>
-          <p className="text-xs md:text-base text-muted-foreground font-semibold">
+          <p className="text-sm md:text-base text-muted-foreground font-semibold">
             Get started with ATLAS in less than two minutes
           </p>
         </div>
@@ -161,7 +161,7 @@ export default function RegisterPage() {
               <div className="absolute inset-0 flex items-center">
                 <span className="w-full border-t border-border/40"></span>
               </div>
-              <div className="relative flex justify-center text-xs md:text-sm">
+              <div className="relative flex justify-center text-sm md:text-sm">
                 <span className="bg-card px-2 text-muted-foreground">Or continue with email</span>
               </div>
             </div>
@@ -169,12 +169,12 @@ export default function RegisterPage() {
             <form onSubmit={handleSubmit} className="space-y-4 md:space-y-6">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-5">
                 <div className="space-y-1.5 md:space-y-2">
-                  <Label htmlFor="name" className="text-xs md:text-base font-bold">Full Name</Label>
+                  <Label htmlFor="name" className="text-sm md:text-base font-bold">Full Name</Label>
                   <div className="relative flex items-center">
                     <User className="absolute left-3 md:left-4 z-10 h-4 md:h-5 w-4 md:w-5 text-muted-foreground pointer-events-none" />
                     <Input
                       id="name"
-                      placeholder="Jane Doe"
+                      placeholder="Samrat Doe"
                       value={form.name}
                       onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))}
                       style={{ paddingLeft: '2.5rem' }}
@@ -185,7 +185,7 @@ export default function RegisterPage() {
                 </div>
 
                 <div className="space-y-1.5 md:space-y-2">
-                  <Label htmlFor="email" className="text-xs md:text-base font-bold">Work Email</Label>
+                  <Label htmlFor="email" className="text-sm md:text-base font-bold">Work Email</Label>
                   <div className="relative flex items-center">
                     <Mail className="absolute left-3 md:left-4 z-10 h-4 md:h-5 w-4 md:w-5 text-muted-foreground pointer-events-none" />
                     <Input
@@ -203,7 +203,7 @@ export default function RegisterPage() {
               </div>
 
               <div className="space-y-1.5 md:space-y-2">
-                <Label htmlFor="password" className="text-xs md:text-base font-bold">Password</Label>
+                <Label htmlFor="password" className="text-sm md:text-base font-bold">Password</Label>
                 <div className="relative flex items-center">
                   <Lock className="absolute left-3 md:left-4 z-10 h-4 md:h-5 w-4 md:w-5 text-muted-foreground pointer-events-none" />
                   <Input
@@ -222,7 +222,7 @@ export default function RegisterPage() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-5">
                 <div className="space-y-1.5 md:space-y-2">
-                  <Label htmlFor="org" className="text-xs md:text-base font-bold">Organization (Optional)</Label>
+                  <Label htmlFor="org" className="text-sm md:text-base font-bold">Organization (Optional)</Label>
                   <div className="relative flex items-center">
                     <Building className="absolute left-3 md:left-4 z-10 h-4 md:h-5 w-4 md:w-5 text-muted-foreground pointer-events-none" />
                     <Input
@@ -237,7 +237,7 @@ export default function RegisterPage() {
                 </div>
 
                 <div className="space-y-1.5 md:space-y-2">
-                  <Label htmlFor="dept" className="text-xs md:text-base font-bold">Department (Optional)</Label>
+                  <Label htmlFor="dept" className="text-sm md:text-base font-bold">Department (Optional)</Label>
                   <Input
                     id="dept"
                     placeholder="Engineering / Sales"
@@ -251,19 +251,19 @@ export default function RegisterPage() {
               <Button type="submit" size="lg" className="w-full gap-2 md:gap-3 mt-2 md:mt-4 h-10 md:h-14 text-sm md:text-lg font-extrabold shadow-lg shadow-primary/25 rounded-xl" disabled={isLoading}>
                 {isLoading ? (
                   <>
-                    <Loader2 className="h-4 md:h-5 w-4 md:w-5 animate-spin" />
+                    <Loader2 className="h-5 md:h-5 w-5 md:w-5 animate-spin" />
                     Creating account...
                   </>
                 ) : (
                   <>
                     Complete Registration
-                    <ArrowRight className="h-4 md:h-5 w-4 md:w-5" />
+                    <ArrowRight className="h-5 md:h-5 w-5 md:w-5" />
                   </>
                 )}
               </Button>
             </form>
 
-            <div className="mt-4 md:mt-8 text-center text-xs md:text-base font-semibold text-muted-foreground">
+            <div className="mt-4 md:mt-8 text-center text-sm md:text-base font-semibold text-muted-foreground">
               Already have an account?{' '}
               <Link to="/login" className="font-bold text-primary hover:underline">
                 Sign In

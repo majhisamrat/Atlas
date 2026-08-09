@@ -199,7 +199,7 @@ export default function KnowledgeDetailPage() {
                       </div>
                       <div className="min-w-0 space-y-0.5">
                         <p className="font-semibold text-sm truncate text-foreground">{u.original_filename}</p>
-                        <p className="text-xs text-muted-foreground flex flex-wrap items-center gap-2">
+                        <p className="text-sm text-muted-foreground flex flex-wrap items-center gap-2">
                           <span>{formatBytes(u.file_size_bytes)}</span>
                           <span>&middot;</span>
                           <span>{u.page_count} pages</span>
@@ -284,7 +284,7 @@ export default function KnowledgeDetailPage() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setUploadOpen(false)}>Cancel</Button>
-            <Button onClick={handleUpload} disabled={!file || uploadDoc.isPending} className="gap-2">
+            <Button onClick={handleUpload} disabled={!file || uploadDoc.isPending} className="gap-3">
               {uploadDoc.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Start Processing'}
             </Button>
           </DialogFooter>

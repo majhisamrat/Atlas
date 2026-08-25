@@ -53,6 +53,13 @@ export default function ChatPage() {
     resetTime: string;
   } | null>(null);
 
+  // Auto-select KB if only 1 exists
+  useEffect(() => {
+    if (kbs && kbs.length === 1 && !selectedKb) {
+      setSelectedKb(kbs[0].id);
+    }
+  }, [kbs, selectedKb]);
+
   // Detect keyboard open/close on mobile
   useEffect(() => {
     const handleResize = () => {
@@ -378,7 +385,10 @@ export default function ChatPage() {
   return (
     <div className="flex-1 w-full h-full flex flex-col md:items-center md:justify-center md:py-2">
       {/* ─── RESPONSIVE CHAT CONTAINER ─── */}
-      <div className="w-full md:max-w-6xl md:h-[90vh] md:max-h-[clamp(93.75rem,93.75rem,117.1875rem)] md:min-h-[clamp(62.5rem,62.5rem,78.125rem)] flex flex-col bg-card/90 backdrop-blur-2xl md:border md:border-border/80 md:rounded-3xl md:shadow-2xl md:overflow-hidden md:glow-sm z-10 h-[85dvh] lg:fixed lg:top-1/2 lg:left-1/2 lg:transform lg:-translate-x-1/2 lg:-translate-y-1/2 rounded-2xl md:rounded-3xl overflow-hidden">
+      <div className={cn(
+        "w-full md:max-w-6xl md:h-[90vh] md:max-h-[clamp(93.75rem,93.75rem,117.1875rem)] md:min-h-[clamp(62.5rem,62.5rem,78.125rem)] flex flex-col bg-card/90 backdrop-blur-2xl md:border md:border-border/80 md:rounded-3xl md:shadow-2xl md:overflow-hidden md:glow-sm z-10 rounded-2xl md:rounded-3xl overflow-hidden",
+        keyboardOpen ? "h-screen md:h-[90vh]" : "h-[85dvh] md:h-[90vh]"
+      )}>
 
         {/* ─── EDGE TOGGLE ARROW (LEFT EDGE OF FIXED CARD) - REMOVED ─── */}
 
@@ -463,16 +473,6 @@ export default function ChatPage() {
               
               {mobileFilterOpen && (
                 <div className="absolute top-full right-0 mt-2 w-48 bg-card border border-border rounded-lg shadow-lg z-50 py-1 kb-filter-dropdown">
-                  <button
-                    onClick={() => {
-                      setSelectedKb('all');
-                      setMobileFilterOpen(false);
-                    }}
-                    className="w-full text-left px-4 py-2 hover:bg-muted flex items-center justify-between text-lg transition-colors"
-                  >
-                    <span>All Knowledge Bases</span>
-                    {selectedKb === 'all' && <Check className="h-4 w-4 text-primary" />}
-                  </button>
                   {kbs?.map((kb) => (
                     <button
                       key={kb.id}
@@ -504,10 +504,9 @@ export default function ChatPage() {
             {/* Knowledge Base Filter (Desktop only) */}
             <Select value={selectedKb} onValueChange={setSelectedKb}>
               <SelectTrigger className="hidden md:flex w-[clamp(15.625rem,15.625rem,19.53125rem)] h-10 text-lg font-bold rounded-xl bg-background/80 border-border">
-                <SelectValue placeholder="All Knowledge Bases" />
+                <SelectValue placeholder={kbs && kbs.length === 1 ? kbs[0].display_name : "Please select a KB to chat"} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Knowledge Bases</SelectItem>
                 {kbs?.map((kb) => (
                   <SelectItem key={kb.id} value={kb.id}>{kb.display_name}</SelectItem>
                 ))}
@@ -531,7 +530,10 @@ export default function ChatPage() {
         </div>
 
         {/* ─── MESSAGES AREA ─── */}
-        <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden p-4 md:p-8 lg:p-10 bg-background/50 pt-6 md:pt-8 lg:pt-10">
+        <div className={cn(
+          "overflow-y-auto overflow-x-hidden p-4 md:p-8 lg:p-10 bg-background/50 pt-6 md:pt-8 lg:pt-10",
+          keyboardOpen ? "flex-1 min-h-0" : "flex-1 min-h-0"
+        )}>
           <div className="max-w-5xl mx-auto space-y-6 md:space-y-8 h-full">
             {/* Rate Limit Alert */}
             {rateLimitInfo && (
@@ -544,7 +546,10 @@ export default function ChatPage() {
             )}
 
             {messages.length === 0 ? (
-              <FadeIn className="h-full flex flex-col justify-center items-center py-12 space-y-6 md:space-y-8 text-center">
+              <FadeIn className={cn(
+                "flex flex-col justify-center items-center space-y-6 md:space-y-8 text-center",
+                keyboardOpen ? "h-auto py-6" : "h-full py-12"
+              )}>
                 <div className="p-4 md:p-6 rounded-3xl bg-primary/10 border border-primary/20 shadow-lg glow-sm">
                   <MessageSquare className="h-8 md:h-12 w-8 md:w-12 text-primary" />
                 </div>
@@ -557,7 +562,7 @@ export default function ChatPage() {
                   </p>
                 </div>
 
-                {/* Prompt Suggestions - Hidden when keyboard open on mobile */}
+                {/* Prompt Suggestions - Hidden when keyboard open on mobile/tablet */}
                 {!keyboardOpen && (
                   <div className="w-full space-y-4">
                     <p className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
@@ -673,11 +678,11 @@ export default function ChatPage() {
                   placeholder={
                     rateLimitInfo?.isLimitReached
                       ? 'Daily message limit reached. Try again after reset time.'
-                      : selectedKb && selectedKb !== 'all'
-                      ? `Ask about ${kbs?.find((k) => k.id === selectedKb)?.display_name}...`
-                      : 'Ask anything across your knowledge bases...'
+                      : !selectedKb
+                      ? 'Please select a KB to chat'
+                      : `Ask about ${kbs?.find((k) => k.id === selectedKb)?.display_name}...`
                   }
-                  disabled={rateLimitInfo?.isLimitReached}
+                  disabled={rateLimitInfo?.isLimitReached || !selectedKb}
                   className="flex-1 border-0 bg-transparent shadow-none focus-visible:ring-0 resize-none py-3 md:py-3 lg:py-3 pl-2 md:pl-3 lg:pl-4 text-lg md:text-sm lg:text-base font-medium placeholder:text-muted-foreground text-foreground disabled:opacity-50 disabled:cursor-not-allowed min-h-[40px] md:min-h-[40px] lg:min-h-[40px] overflow-y-auto break-words whitespace-normal"
                   rows={1}
                   spellCheck="true"
@@ -685,7 +690,7 @@ export default function ChatPage() {
 
                 <Button
                   onClick={() => handleSend()}
-                  disabled={!input.trim() || chatMutation.isPending || rateLimitInfo?.isLimitReached}
+                  disabled={!input.trim() || chatMutation.isPending || rateLimitInfo?.isLimitReached || !selectedKb}
                   size="icon"
                   className="gap-2 shadow-lg shadow-primary/25 h-8 md:h-8 lg:h-8 w-8 md:w-8 lg:w-8 font-bold rounded-full flex-shrink-0 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
                 >

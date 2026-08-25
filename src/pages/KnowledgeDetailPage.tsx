@@ -62,6 +62,22 @@ export default function KnowledgeDetailPage() {
   if (error) return <ErrorState title="Failed to load knowledge base" onRetry={() => refetch()} />;
   if (!kb) return <ErrorState title="Knowledge base not found" />;
 
+  // Check if upload limit is reached (5 files per KB)
+  const isUploadLimitReached = history && history.uploads.length >= 5;
+
+  const handleUploadDialogOpen = (open: boolean) => {
+    setUploadOpen(open);
+    // Show limit alert when dialog opens and limit is reached
+    if (open && isUploadLimitReached) {
+      setUploadLimitInfo({
+        isLimitReached: true,
+        uploadCount: history?.uploads.length || 5,
+        maxUploads: 5,
+        resetTime: 'Daily reset at 00:00 UTC',
+      });
+    }
+  };
+
   const handleUpload = async () => {
     if (!file) return;
     try {
@@ -70,6 +86,7 @@ export default function KnowledgeDetailPage() {
       setFile(null);
       setDisplayName('');
       setTags('');
+      setUploadLimitInfo(null);
     } catch (error: any) {
       // Check if error is upload limit error (429)
       if (error?.response?.status === 429) {
@@ -123,7 +140,7 @@ export default function KnowledgeDetailPage() {
           <RefreshCw className={`h-4 w-4 ${reindexKb.isPending ? 'animate-spin' : ''}`} />
           {reindexKb.isPending ? 'Reindexing...' : 'Reindex'}
         </Button>
-        <Button onClick={() => setUploadOpen(true)} disabled={uploadLimitInfo?.isLimitReached} className="gap-1.5 shadow-md shadow-primary/20">
+        <Button onClick={() => handleUploadDialogOpen(true)} disabled={isUploadLimitReached} className="gap-1.5 shadow-md shadow-primary/20">
           <Upload className="h-4 w-4" />
           Upload Document
         </Button>
@@ -240,7 +257,7 @@ export default function KnowledgeDetailPage() {
       </FadeIn>
 
       {/* Upload Modal */}
-      <Dialog open={uploadOpen} onOpenChange={setUploadOpen}>
+      <Dialog open={uploadOpen} onOpenChange={handleUploadDialogOpen}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
@@ -251,6 +268,17 @@ export default function KnowledgeDetailPage() {
               Supported formats: PDF, DOCX, PPTX, XLSX, XLS, CSV, TXT, MD
             </DialogDescription>
           </DialogHeader>
+
+          {/* Upload Limit Alert inside Modal */}
+          {isUploadLimitReached && (
+            <Alert variant="destructive" className="border-red-400/50 bg-red-50/80 dark:bg-red-950/20 rounded-xl">
+              <AlertCircle className="h-5 w-5 text-red-600 dark:text-red-400" />
+              <AlertDescription className="text-sm text-red-800 dark:text-red-300 ml-2">
+                <span className="font-bold">Max 5 files per KB</span> - You have reached the upload limit for this knowledge base.
+              </AlertDescription>
+            </Alert>
+          )}
+
           <div className="space-y-4 py-2">
             <div className="space-y-1.5">
               <Label htmlFor="file">Select File</Label>
@@ -260,6 +288,7 @@ export default function KnowledgeDetailPage() {
                 accept=".pdf,.docx,.pptx,.xlsx,.xls,.csv,.txt,.md"
                 onChange={(e) => setFile(e.target.files?.[0] ?? null)}
                 className="cursor-pointer"
+                disabled={isUploadLimitReached}
               />
             </div>
 
@@ -270,6 +299,7 @@ export default function KnowledgeDetailPage() {
                 value={displayName}
                 onChange={(e) => setDisplayName(e.target.value)}
                 placeholder="Defaults to original filename"
+                disabled={isUploadLimitReached}
               />
             </div>
             <div className="space-y-1.5">
@@ -279,12 +309,13 @@ export default function KnowledgeDetailPage() {
                 value={tags}
                 onChange={(e) => setTags(e.target.value)}
                 placeholder="e.g. sales, q1_report, 2026"
+                disabled={isUploadLimitReached}
               />
             </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setUploadOpen(false)}>Cancel</Button>
-            <Button onClick={handleUpload} disabled={!file || uploadDoc.isPending} className="gap-3">
+            <Button onClick={handleUpload} disabled={!file || uploadDoc.isPending || isUploadLimitReached} className="gap-3">
               {uploadDoc.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Start Processing'}
             </Button>
           </DialogFooter>

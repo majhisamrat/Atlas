@@ -17,8 +17,10 @@ export default defineConfig({
     allowedHosts: ['.monkeycode-ai.live'],
     proxy: {
       '/api': {
-        target: 'http://localhost:8000',
+        target: 'https://atlasrag.duckdns.org',
         changeOrigin: true,
+        secure: false,
+        rewrite: (path) => path,
       },
     },
   },

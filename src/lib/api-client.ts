@@ -5,6 +5,12 @@ const getStoredAuthToken = () => {
 };
 
 const getApiBaseURL = () => {
+  // During development, use the Vite proxy (starts with /)
+  // During production, use the full API URL from env
+  if (import.meta.env.DEV) {
+    return '/api/v1';
+  }
+  
   const apiUrl = import.meta.env.VITE_API_URL;
   if (apiUrl) {
     return `${apiUrl}/api/v1`;

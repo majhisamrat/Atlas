@@ -13,6 +13,7 @@ import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger } from '@/components/ui/dialog';
 import { Plus, Database, Calendar, MessageSquare, Loader2 } from 'lucide-react';
 import { StaggerContainer, StaggerItem } from '@/components/shared/motion';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 export default function KnowledgeBasesPage() {
   const { data: kbs, isLoading, error, refetch } = useKnowledgeBases();
@@ -21,16 +22,35 @@ export default function KnowledgeBasesPage() {
 
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({ name: '', display_name: '', description: '' });
+  const [limitError, setLimitError] = useState(false);
+
+  // Check if KB limit reached when dialog opens
+  const isKBLimitReached = kbs && kbs.length >= 3;
 
   const handleCreate = async () => {
     if (!form.name || !form.display_name) return;
-    await createKb.mutateAsync({
-      name: form.name,
-      display_name: form.display_name,
-      description: form.description || undefined,
-    });
-    setOpen(false);
-    setForm({ name: '', display_name: '', description: '' });
+    try {
+      setLimitError(false);
+      await createKb.mutateAsync({
+        name: form.name,
+        display_name: form.display_name,
+        description: form.description || undefined,
+      });
+      setOpen(false);
+      setForm({ name: '', display_name: '', description: '' });
+    } catch (err: any) {
+      // Check if error is KB limit reached
+      if (err?.response?.status === 429 || err?.message?.includes('limit')) {
+        setLimitError(true);
+      }
+    }
+  };
+
+  const handleDialogOpen = (isOpen: boolean) => {
+    setOpen(isOpen);
+    if (!isOpen) {
+      setLimitError(false);
+    }
   };
 
   if (isLoading) {
@@ -49,7 +69,7 @@ export default function KnowledgeBasesPage() {
   return (
     <div className="space-y-8">
       <PageHeader title="Knowledge Bases" description="Organize documents into domain-specific collections">
-        <Dialog open={open} onOpenChange={setOpen}>
+        <Dialog open={open} onOpenChange={handleDialogOpen}>
           <DialogTrigger asChild>
             <Button size="lg" className="gap-2.5 shadow-lg shadow-primary/25 text-base font-semibold px-6 h-12">
               <Plus className="h-5 w-5" />
@@ -67,6 +87,11 @@ export default function KnowledgeBasesPage() {
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-5 py-3">
+              {isKBLimitReached && (
+                <Alert variant="destructive" className="text-base py-3 rounded-xl font-semibold">
+                  <AlertDescription>Please delete a KB to create a new one</AlertDescription>
+                </Alert>
+              )}
               <div className="space-y-2">
                 <Label htmlFor="kb-name" className="text-lg font-bold">Identifier Name</Label>
                 <Input
@@ -75,6 +100,7 @@ export default function KnowledgeBasesPage() {
                   value={form.name}
                   onChange={(e) => setForm((p) => ({ ...p, name: e.target.value.toLowerCase().replace(/\s+/g, '_') }))}
                   className="h-12 text-base"
+                  disabled={isKBLimitReached}
                 />
                 <p className="text-sm text-muted-foreground font-medium">Unique identifier used in API requests (no spaces)</p>
               </div>
@@ -86,6 +112,7 @@ export default function KnowledgeBasesPage() {
                   value={form.display_name}
                   onChange={(e) => setForm((p) => ({ ...p, display_name: e.target.value }))}
                   className="h-12 text-base"
+                  disabled={isKBLimitReached}
                 />
               </div>
               <div className="space-y-2">
@@ -96,12 +123,13 @@ export default function KnowledgeBasesPage() {
                   value={form.description}
                   onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))}
                   className="h-12 text-base"
+                  disabled={isKBLimitReached}
                 />
               </div>
             </div>
             <DialogFooter className="gap-3 pt-4">
-              <Button variant="outline" size="lg" onClick={() => setOpen(false)} className="text-base font-semibold px-6">Cancel</Button>
-              <Button size="lg" onClick={handleCreate} disabled={createKb.isPending || !form.name || !form.display_name} className="gap-2 text-base font-semibold px-6">
+              <Button variant="outline" size="lg" onClick={() => handleDialogOpen(false)} className="text-base font-semibold px-6">Cancel</Button>
+              <Button size="lg" onClick={handleCreate} disabled={createKb.isPending || !form.name || !form.display_name || isKBLimitReached} className="gap-2 text-base font-semibold px-6">
                 {createKb.isPending ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Create Knowledge Base'}
               </Button>
             </DialogFooter>

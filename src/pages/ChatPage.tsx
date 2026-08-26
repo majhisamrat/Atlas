@@ -387,7 +387,8 @@ export default function ChatPage() {
       {/* ─── RESPONSIVE CHAT CONTAINER ─── */}
       <div className={cn(
         "w-full md:max-w-6xl md:h-[90vh] md:max-h-[clamp(93.75rem,93.75rem,117.1875rem)] md:min-h-[clamp(62.5rem,62.5rem,78.125rem)] flex flex-col bg-card/90 backdrop-blur-2xl md:border md:border-border/80 md:rounded-3xl md:shadow-2xl md:overflow-hidden md:glow-sm z-10 rounded-2xl md:rounded-3xl overflow-hidden",
-        keyboardOpen ? "h-screen md:h-[90vh]" : "h-[85dvh] md:h-[90vh]"
+        "h-[85dvh] md:h-[90vh]",
+        keyboardOpen && "pb-24"
       )}>
 
         {/* ─── EDGE TOGGLE ARROW (LEFT EDGE OF FIXED CARD) - REMOVED ─── */}
@@ -531,8 +532,8 @@ export default function ChatPage() {
 
         {/* ─── MESSAGES AREA ─── */}
         <div className={cn(
-          "overflow-y-auto overflow-x-hidden p-4 md:p-8 lg:p-10 bg-background/50 pt-6 md:pt-8 lg:pt-10",
-          keyboardOpen ? "flex-1 min-h-0" : "flex-1 min-h-0"
+          "overflow-y-auto overflow-x-hidden p-4 md:p-8 lg:p-10 bg-background/50 pt-6 md:pt-8 lg:pt-10 flex-1",
+          keyboardOpen ? "min-h-0" : "min-h-0"
         )}>
           <div className="max-w-5xl mx-auto space-y-6 md:space-y-8 h-full">
             {/* Rate Limit Alert */}
@@ -666,7 +667,10 @@ export default function ChatPage() {
         </div>
 
         {/* ─── INPUT AREA ─── */}
-        <div className="border-t border-border/70 bg-muted/20 shrink-0">
+        <div className={cn(
+          "border-t border-border/70 bg-muted/20 shrink-0",
+          keyboardOpen && "md:hidden fixed bottom-0 left-0 right-0 z-50 w-full"
+        )}>
           <div className="p-2 md:p-3 lg:p-4 relative">
             <div className="max-w-6xl mx-auto relative">
               <div className="relative rounded-2xl border border-border/80 bg-card/60 shadow-lg px-4 md:px-4 lg:px-5 py-2 md:py-2 lg:py-3 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20 transition-all flex items-center gap-2 md:gap-3">

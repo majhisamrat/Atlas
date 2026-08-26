@@ -18,6 +18,10 @@ export interface SendOTPRequest {
 export interface VerifyOTPRequest {
   email: string;
   otp: string;
+  name?: string;
+  password?: string;
+  organization_name?: string;
+  department?: string;
 }
 
 export interface GoogleAuthRequest {

@@ -17,13 +17,13 @@ export const authApi = {
     apiClient.post<TokenResponse>('/auth/login', data).then((r) => r.data),
 
   sendOtp: (data: SendOTPRequest) =>
-    apiClient.post<{ success: boolean; message: string }>('/auth/send-otp', data).then((r) => r.data),
+    apiClient.post<{ success: boolean; message: string }>('/auth/register-init', data).then((r) => r.data),
 
   verifyOtp: (data: VerifyOTPRequest) =>
     apiClient.post<TokenResponse>('/auth/verify-otp', data).then((r) => r.data),
 
   googleAuth: (data: GoogleAuthRequest) =>
-    apiClient.post<TokenResponse>('/auth/google', data).then((r) => r.data),
+    apiClient.post<TokenResponse>('/auth/google-login', data).then((r) => r.data),
 
   getMe: () => apiClient.get<UserProfile>('/auth/me').then((r) => r.data),
 };

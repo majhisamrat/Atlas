@@ -409,7 +409,7 @@ export default function ChatPage() {
       {/* ─── RESPONSIVE CHAT CONTAINER ─── */}
       <div className={cn(
         "w-full md:max-w-6xl md:h-[90vh] md:max-h-[clamp(93.75rem,93.75rem,117.1875rem)] md:min-h-[clamp(62.5rem,62.5rem,78.125rem)] flex flex-col bg-card/90 backdrop-blur-2xl md:border md:border-border/80 md:rounded-3xl md:shadow-2xl md:overflow-hidden md:glow-sm z-10 rounded-2xl md:rounded-3xl overflow-hidden",
-        keyboardOpen ? "h-auto md:h-[90vh]" : "h-[85dvh] md:h-[90vh]"
+        "h-[85dvh] md:h-[90vh]"
       )}>
 
         {/* ─── EDGE TOGGLE ARROW (LEFT EDGE OF FIXED CARD) - REMOVED ─── */}
@@ -684,16 +684,10 @@ export default function ChatPage() {
         {/* ─── INPUT AREA ─── */}
         <div className={cn(
           "border-t border-border/70 bg-muted/20 shrink-0",
-          keyboardOpen && "fixed bottom-0 left-0 right-0 z-50 md:static md:relative"
+          keyboardOpen && "md:block hidden"
         )}>
-          <div className={cn(
-            "p-2 md:p-3 lg:p-4 relative",
-            keyboardOpen && "w-full"
-          )}>
-            <div className={cn(
-              "max-w-6xl mx-auto relative",
-              keyboardOpen && "px-4"
-            )}>
+          <div className="p-2 md:p-3 lg:p-4 relative">
+            <div className="max-w-6xl mx-auto relative">
               <div className="relative rounded-2xl border border-border/80 bg-card/60 shadow-lg px-4 md:px-4 lg:px-5 py-2 md:py-2 lg:py-3 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20 transition-all flex items-center gap-2 md:gap-3">
                 <Textarea
                   ref={textareaRef}
@@ -831,6 +825,48 @@ export default function ChatPage() {
         )}
 
       </div>
+
+      {/* ─── FLOATING INPUT (Mobile/Tablet with Keyboard) ─── */}
+      {keyboardOpen && (
+        <div className="fixed bottom-0 left-0 right-0 z-50 md:hidden border-t border-border/70 bg-muted/20 w-full">
+          <div className="p-2 md:p-3 lg:p-4 relative">
+            <div className="max-w-6xl mx-auto relative px-2">
+              <div className="relative rounded-2xl border border-border/80 bg-card/60 shadow-lg px-4 md:px-4 lg:px-5 py-2 md:py-2 lg:py-3 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20 transition-all flex items-center gap-2 md:gap-3">
+                <Textarea
+                  ref={textareaRef}
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  placeholder={
+                    rateLimitInfo?.isLimitReached
+                      ? 'Daily message limit reached. Try again after reset time.'
+                      : !selectedKb
+                      ? 'Please select a KB to chat'
+                      : `Ask about ${kbs?.find((k) => k.id === selectedKb)?.display_name}...`
+                  }
+                  disabled={rateLimitInfo?.isLimitReached || !selectedKb}
+                  className="flex-1 border-0 bg-transparent shadow-none focus-visible:ring-0 resize-none py-3 md:py-3 lg:py-3 pl-2 md:pl-3 lg:pl-4 text-lg md:text-sm lg:text-base font-medium placeholder:text-muted-foreground text-foreground disabled:opacity-50 disabled:cursor-not-allowed min-h-[40px] md:min-h-[40px] lg:min-h-[40px] overflow-y-auto break-words whitespace-normal"
+                  rows={1}
+                  spellCheck="true"
+                />
+
+                <Button
+                  onClick={() => handleSend()}
+                  disabled={!input.trim() || chatMutation.isPending || rateLimitInfo?.isLimitReached || !selectedKb}
+                  size="icon"
+                  className="gap-2 shadow-lg shadow-primary/25 h-8 md:h-8 lg:h-8 w-8 md:w-8 lg:w-8 font-bold rounded-full flex-shrink-0 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {chatMutation.isPending ? (
+                    <Loader2 className="h-4 md:h-4 lg:h-4 w-4 md:w-4 lg:w-4 animate-spin" />
+                  ) : (
+                    <Send className="h-5 md:h-5 lg:h-5 w-5 md:w-5 lg:w-5" />
+                  )}
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

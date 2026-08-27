@@ -71,11 +71,33 @@ export default function ChatPage() {
       }
     };
 
+    // Also detect keyboard via textarea focus/blur
+    const handleFocus = () => {
+      if (window.innerWidth < 768) {
+        setKeyboardOpen(true);
+      }
+    };
+
+    const handleBlur = () => {
+      setKeyboardOpen(false);
+    };
+
+    const textarea = textareaRef.current;
+    if (textarea) {
+      textarea.addEventListener('focus', handleFocus);
+      textarea.addEventListener('blur', handleBlur);
+    }
+
     window.addEventListener('resize', handleResize);
     window.addEventListener('orientationchange', handleResize);
+    
     return () => {
       window.removeEventListener('resize', handleResize);
       window.removeEventListener('orientationchange', handleResize);
+      if (textarea) {
+        textarea.removeEventListener('focus', handleFocus);
+        textarea.removeEventListener('blur', handleBlur);
+      }
     };
   }, []);
 
@@ -387,8 +409,7 @@ export default function ChatPage() {
       {/* ─── RESPONSIVE CHAT CONTAINER ─── */}
       <div className={cn(
         "w-full md:max-w-6xl md:h-[90vh] md:max-h-[clamp(93.75rem,93.75rem,117.1875rem)] md:min-h-[clamp(62.5rem,62.5rem,78.125rem)] flex flex-col bg-card/90 backdrop-blur-2xl md:border md:border-border/80 md:rounded-3xl md:shadow-2xl md:overflow-hidden md:glow-sm z-10 rounded-2xl md:rounded-3xl overflow-hidden",
-        "h-[85dvh] md:h-[90vh]",
-        keyboardOpen && "pb-24"
+        keyboardOpen ? "h-auto md:h-[90vh]" : "h-[85dvh] md:h-[90vh]"
       )}>
 
         {/* ─── EDGE TOGGLE ARROW (LEFT EDGE OF FIXED CARD) - REMOVED ─── */}

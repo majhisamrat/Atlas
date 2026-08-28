@@ -40,6 +40,7 @@ export default function ChatPage() {
   const { data: kbs } = useKnowledgeBases();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const chatPageRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const touchStartX = useRef(0);
   const touchEndX = useRef(0);
@@ -135,6 +136,59 @@ export default function ChatPage() {
       visualViewport.removeEventListener('scroll', updateKeyboardHeight);
       window.removeEventListener('resize', updateKeyboardHeight);
       window.removeEventListener('orientationchange', handleOrientationChange);
+    };
+  }, []);
+
+  // ─────────────────────────────────────────────────────────────
+  // PREVENT THE MOBILE APP LAYOUT FROM SCROLLING THE WHOLE CHAT PAGE
+  //
+  // AppLayout's mobile wrapper has overflow-y-auto. Android normally
+  // tries to scroll that wrapper when the textarea gets focus so that
+  // the input is visible above the keyboard. Because our composer is
+  // already keyboard-aware/fixed, that automatic parent scroll is not
+  // wanted: it makes the entire Atlas card jump upward.
+  //
+  // ChatPage has its own scrollable messages area, so the outer
+  // AppLayout wrapper does not need to scroll while this page is open.
+  // This is scoped only to ChatPage and is restored on unmount.
+  // ─────────────────────────────────────────────────────────────
+  useEffect(() => {
+    if (window.innerWidth >= 1024) return;
+
+    const page = chatPageRef.current;
+    if (!page) return;
+
+    // Find AppLayout's mobile overflow-y-auto wrapper.
+    let parent = page.parentElement;
+
+    while (parent) {
+      const style = window.getComputedStyle(parent);
+
+      if (/(auto|scroll)/.test(style.overflowY)) {
+        break;
+      }
+
+      parent = parent.parentElement;
+    }
+
+    if (!parent) return;
+
+    const previousOverflowY = parent.style.overflowY;
+    const previousOverscrollBehaviorY = parent.style.overscrollBehaviorY;
+    const previousOverflowAnchor = parent.style.overflowAnchor;
+    const previousScrollTop = parent.scrollTop;
+
+    // The critical fix: Android cannot scroll the outer ChatPage.
+    parent.style.overflowY = 'hidden';
+    parent.style.overscrollBehaviorY = 'none';
+    parent.style.overflowAnchor = 'none';
+    parent.scrollTop = previousScrollTop;
+
+    return () => {
+      parent.style.overflowY = previousOverflowY;
+      parent.style.overscrollBehaviorY = previousOverscrollBehaviorY;
+      parent.style.overflowAnchor = previousOverflowAnchor;
+      parent.scrollTop = previousScrollTop;
     };
   }, []);
 
@@ -442,7 +496,11 @@ export default function ChatPage() {
   };
 
   return (
-    <div className="relative flex-1 w-full h-full flex flex-col md:items-center md:justify-center md:py-2">
+    <div
+      ref={chatPageRef}
+      className="relative flex-1 w-full h-full flex flex-col md:items-center md:justify-center md:py-2"
+      style={{ overflowAnchor: 'none' }}
+    >
       {/* ─── RESPONSIVE CHAT CONTAINER ─── */}
       <div className="relative w-full md:max-w-6xl md:h-[90vh] flex flex-col">
         <div className={cn(
@@ -828,9 +886,16 @@ export default function ChatPage() {
 
         </div>
 
+        {/* ─────────────────────────────────────────────────────────
+            KEYBOARD-AWARE CHAT COMPOSER
+            Desktop: anchored to the bottom of the chat card.
+            Mobile/tablet: fixed to the visual viewport and follows
+            the on-screen keyboard using keyboardHeight.
+            ───────────────────────────────────────────────────────── */}
         <div
           className="z-40 fixed left-3 right-3 lg:absolute lg:left-0 lg:right-0 lg:bottom-0"
           style={{
+            overflowAnchor: 'none',
             bottom:
               window.innerWidth < 1024
                 ? `${keyboardHeight + 8}px`

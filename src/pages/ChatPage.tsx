@@ -828,12 +828,6 @@ export default function ChatPage() {
 
         </div>
 
-        {/* ─────────────────────────────────────────────────────────
-            KEYBOARD-AWARE CHAT COMPOSER
-            Desktop: anchored to the bottom of the chat card.
-            Mobile/tablet: fixed to the visual viewport and follows
-            the on-screen keyboard using keyboardHeight.
-            ───────────────────────────────────────────────────────── */}
         <div
           className="z-40 fixed left-3 right-3 lg:absolute lg:left-0 lg:right-0 lg:bottom-0"
           style={{

@@ -36,7 +36,6 @@ export default function ChatPage() {
   const [currentSessionTitle, setCurrentSessionTitle] = useState<string>('');
   const [historyExpanded, setHistoryExpanded] = useState(false);
   const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
-  const [keyboardOpen, setKeyboardOpen] = useState(false);
   const chatMutation = useChat();
   const { data: kbs } = useKnowledgeBases();
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -60,46 +59,8 @@ export default function ChatPage() {
     }
   }, [kbs, selectedKb]);
 
-  // Detect keyboard open/close on mobile
-  useEffect(() => {
-    const handleResize = () => {
-      if (window.innerWidth < 768) {
-        const viewportHeight = window.innerHeight;
-        const screenHeight = window.screen.height;
-        // If viewport is significantly smaller than screen, keyboard is likely open
-        setKeyboardOpen(screenHeight - viewportHeight > 100);
-      }
-    };
-
-    // Also detect keyboard via textarea focus/blur
-    const handleFocus = () => {
-      if (window.innerWidth < 768) {
-        setKeyboardOpen(true);
-      }
-    };
-
-    const handleBlur = () => {
-      setKeyboardOpen(false);
-    };
-
-    const textarea = textareaRef.current;
-    if (textarea) {
-      textarea.addEventListener('focus', handleFocus);
-      textarea.addEventListener('blur', handleBlur);
-    }
-
-    window.addEventListener('resize', handleResize);
-    window.addEventListener('orientationchange', handleResize);
-    
-    return () => {
-      window.removeEventListener('resize', handleResize);
-      window.removeEventListener('orientationchange', handleResize);
-      if (textarea) {
-        textarea.removeEventListener('focus', handleFocus);
-        textarea.removeEventListener('blur', handleBlur);
-      }
-    };
-  }, []);
+  // Track input focus to hide prompts on mobile
+  const [inputFocused, setInputFocused] = useState(false);
 
   // Close history when clicking outside on mobile
   useEffect(() => {
@@ -578,8 +539,8 @@ export default function ChatPage() {
                   </p>
                 </div>
 
-                {/* Prompt Suggestions - Hidden when keyboard open on mobile/tablet */}
-                {!keyboardOpen && (
+                {/* Prompt Suggestions - Hidden when input focused on mobile/tablet */}
+                {!inputFocused && (
                   <div className="w-full space-y-4">
                     <p className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
                       Suggested Prompts
@@ -682,10 +643,7 @@ export default function ChatPage() {
         </div>
 
         {/* ─── INPUT AREA ─── */}
-        <div className={cn(
-          "border-t border-border/70 bg-muted/20 shrink-0",
-          keyboardOpen && "md:block hidden"
-        )}>
+        <div className="border-t border-border/70 bg-muted/20 shrink-0">
           <div className="p-2 md:p-3 lg:p-4 relative">
             <div className="max-w-6xl mx-auto relative">
               <div className="relative rounded-2xl border border-border/80 bg-card/60 shadow-lg px-4 md:px-4 lg:px-5 py-2 md:py-2 lg:py-3 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20 transition-all flex items-center gap-2 md:gap-3">
@@ -694,6 +652,8 @@ export default function ChatPage() {
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={handleKeyDown}
+                  onFocus={() => setInputFocused(true)}
+                  onBlur={() => setInputFocused(false)}
                   placeholder={
                     rateLimitInfo?.isLimitReached
                       ? 'Daily message limit reached. Try again after reset time.'
@@ -825,48 +785,6 @@ export default function ChatPage() {
         )}
 
       </div>
-
-      {/* ─── FLOATING INPUT (Mobile/Tablet with Keyboard) ─── */}
-      {keyboardOpen && (
-        <div className="fixed bottom-0 left-0 right-0 z-50 md:hidden border-t border-border/70 bg-muted/20 w-full">
-          <div className="p-2 md:p-3 lg:p-4 relative">
-            <div className="max-w-6xl mx-auto relative px-2">
-              <div className="relative rounded-2xl border border-border/80 bg-card/60 shadow-lg px-4 md:px-4 lg:px-5 py-2 md:py-2 lg:py-3 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20 transition-all flex items-center gap-2 md:gap-3">
-                <Textarea
-                  ref={textareaRef}
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  placeholder={
-                    rateLimitInfo?.isLimitReached
-                      ? 'Daily message limit reached. Try again after reset time.'
-                      : !selectedKb
-                      ? 'Please select a KB to chat'
-                      : `Ask about ${kbs?.find((k) => k.id === selectedKb)?.display_name}...`
-                  }
-                  disabled={rateLimitInfo?.isLimitReached || !selectedKb}
-                  className="flex-1 border-0 bg-transparent shadow-none focus-visible:ring-0 resize-none py-3 md:py-3 lg:py-3 pl-2 md:pl-3 lg:pl-4 text-lg md:text-sm lg:text-base font-medium placeholder:text-muted-foreground text-foreground disabled:opacity-50 disabled:cursor-not-allowed min-h-[40px] md:min-h-[40px] lg:min-h-[40px] overflow-y-auto break-words whitespace-normal"
-                  rows={1}
-                  spellCheck="true"
-                />
-
-                <Button
-                  onClick={() => handleSend()}
-                  disabled={!input.trim() || chatMutation.isPending || rateLimitInfo?.isLimitReached || !selectedKb}
-                  size="icon"
-                  className="gap-2 shadow-lg shadow-primary/25 h-8 md:h-8 lg:h-8 w-8 md:w-8 lg:w-8 font-bold rounded-full flex-shrink-0 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {chatMutation.isPending ? (
-                    <Loader2 className="h-4 md:h-4 lg:h-4 w-4 md:w-4 lg:w-4 animate-spin" />
-                  ) : (
-                    <Send className="h-5 md:h-5 lg:h-5 w-5 md:w-5 lg:w-5" />
-                  )}
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

@@ -41,6 +41,18 @@ export default function ChatPage() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const chatPageRef = useRef<HTMLDivElement>(null);
+  const chatCardRef = useRef<HTMLDivElement>(null);
+
+  // When Android opens the keyboard it can scroll an ancestor before the
+  // visual viewport resize finishes. We freeze the card at its exact
+  // pre-keyboard screen position so the card itself cannot jump.
+  const [keyboardCardPosition, setKeyboardCardPosition] = useState<{
+    top: number;
+    left: number;
+    width: number;
+    height: number;
+  } | null>(null);
+
   const navigate = useNavigate();
   const touchStartX = useRef(0);
   const touchEndX = useRef(0);
@@ -140,17 +152,18 @@ export default function ChatPage() {
   }, []);
 
   // ─────────────────────────────────────────────────────────────
-  // PREVENT THE MOBILE APP LAYOUT FROM SCROLLING THE WHOLE CHAT PAGE
+  // PREVENT ANDROID FROM MOVING THE CHAT CARD WHEN THE INPUT FOCUSES
   //
-  // AppLayout's mobile wrapper has overflow-y-auto. Android normally
-  // tries to scroll that wrapper when the textarea gets focus so that
-  // the input is visible above the keyboard. Because our composer is
-  // already keyboard-aware/fixed, that automatic parent scroll is not
-  // wanted: it makes the entire Atlas card jump upward.
+  // AppLayout's mobile wrapper is overflow-y-auto. Android may scroll
+  // that wrapper to reveal a focused input. Our composer is already
+  // keyboard-aware, so that automatic scroll is unwanted.
   //
-  // ChatPage has its own scrollable messages area, so the outer
-  // AppLayout wrapper does not need to scroll while this page is open.
-  // This is scoped only to ChatPage and is restored on unmount.
+  // We do two things:
+  //   1. Keep the outer AppLayout wrapper from being user-scrollable.
+  //   2. Freeze the chat card at its exact screen position while the
+  //      keyboard is opening.
+  //
+  // The messages container inside ChatPage remains scrollable.
   // ─────────────────────────────────────────────────────────────
   useEffect(() => {
     if (window.innerWidth >= 1024) return;
@@ -158,13 +171,15 @@ export default function ChatPage() {
     const page = chatPageRef.current;
     if (!page) return;
 
-    // Find AppLayout's mobile overflow-y-auto wrapper.
     let parent = page.parentElement;
 
     while (parent) {
       const style = window.getComputedStyle(parent);
 
-      if (/(auto|scroll)/.test(style.overflowY)) {
+      if (
+        /(auto|scroll)/.test(style.overflowY) &&
+        parent !== page
+      ) {
         break;
       }
 
@@ -176,21 +191,44 @@ export default function ChatPage() {
     const previousOverflowY = parent.style.overflowY;
     const previousOverscrollBehaviorY = parent.style.overscrollBehaviorY;
     const previousOverflowAnchor = parent.style.overflowAnchor;
-    const previousScrollTop = parent.scrollTop;
 
-    // The critical fix: Android cannot scroll the outer ChatPage.
     parent.style.overflowY = 'hidden';
     parent.style.overscrollBehaviorY = 'none';
     parent.style.overflowAnchor = 'none';
-    parent.scrollTop = previousScrollTop;
 
     return () => {
       parent.style.overflowY = previousOverflowY;
       parent.style.overscrollBehaviorY = previousOverscrollBehaviorY;
       parent.style.overflowAnchor = previousOverflowAnchor;
-      parent.scrollTop = previousScrollTop;
     };
   }, []);
+
+  // Keep the card locked until the keyboard has completely closed.
+  useEffect(() => {
+    if (keyboardHeight === 0) {
+      setKeyboardCardPosition(null);
+    }
+  }, [keyboardHeight]);
+
+  // Capture the card's position BEFORE Android has a chance to scroll
+  // the page as a result of focusing the textarea.
+  const handleInputFocus = () => {
+    setInputFocused(true);
+
+    if (window.innerWidth >= 1024) return;
+
+    const card = chatCardRef.current;
+    if (!card) return;
+
+    const rect = card.getBoundingClientRect();
+
+    setKeyboardCardPosition({
+      top: rect.top,
+      left: rect.left,
+      width: rect.width,
+      height: rect.height,
+    });
+  };
 
   // Close history when clicking outside on mobile
   useEffect(() => {
@@ -503,9 +541,28 @@ export default function ChatPage() {
     >
       {/* ─── RESPONSIVE CHAT CONTAINER ─── */}
       <div className="relative w-full md:max-w-6xl md:h-[90vh] flex flex-col">
-        <div className={cn(
-          "w-full h-full md:h-[90vh] md:max-h-[clamp(93.75rem,93.75rem,117.1875rem)] md:min-h-[clamp(62.5rem,62.5rem,78.125rem)] flex flex-col bg-card/90 backdrop-blur-2xl md:border md:border-border/80 md:rounded-3xl md:shadow-2xl md:overflow-hidden md:glow-sm z-10 rounded-2xl md:rounded-3xl overflow-hidden"
-        )}>
+        <div
+          ref={chatCardRef}
+          className={cn(
+            "w-full h-full md:h-[90vh] md:max-h-[clamp(93.75rem,93.75rem,117.1875rem)] md:min-h-[clamp(62.5rem,62.5rem,78.125rem)] flex flex-col bg-card/90 backdrop-blur-2xl md:border md:border-border/80 md:rounded-3xl md:shadow-2xl md:overflow-hidden md:glow-sm z-10 rounded-2xl md:rounded-3xl overflow-hidden"
+          )}
+          style={
+            keyboardHeight > 120 && keyboardCardPosition
+              ? {
+                  position: 'fixed',
+                  top: `${keyboardCardPosition.top}px`,
+                  left: `${keyboardCardPosition.left}px`,
+                  width: `${keyboardCardPosition.width}px`,
+                  height: `${keyboardCardPosition.height}px`,
+                  maxHeight: 'none',
+                  minHeight: '0',
+                  margin: '0',
+                  overflowAnchor: 'none',
+                  zIndex: 20,
+                }
+              : undefined
+          }
+        >
 
         {/* ─── EDGE TOGGLE ARROW (LEFT EDGE OF FIXED CARD) - REMOVED ─── */}
 
@@ -921,7 +978,7 @@ export default function ChatPage() {
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
                     onKeyDown={handleKeyDown}
-                    onFocus={() => setInputFocused(true)}
+                    onFocus={handleInputFocus}
                     onBlur={() => setInputFocused(false)}
                     placeholder={
                       rateLimitInfo?.isLimitReached

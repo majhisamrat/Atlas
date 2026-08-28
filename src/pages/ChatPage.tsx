@@ -62,6 +62,82 @@ export default function ChatPage() {
   // Track input focus to hide prompts on mobile
   const [inputFocused, setInputFocused] = useState(false);
 
+  // ─── MOBILE/TABLET KEYBOARD-AWARE COMPOSER ───
+  // Android/iOS change the visual viewport when the on-screen keyboard opens.
+  // We use that change to move only the composer above the keyboard.
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
+  const layoutViewportHeightRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    const visualViewport = window.visualViewport;
+    if (!visualViewport) return;
+
+    const isMobileOrTablet = () => window.innerWidth < 1024;
+
+    layoutViewportHeightRef.current = Math.max(
+      document.documentElement.clientHeight,
+      window.innerHeight
+    );
+
+    let frameId: number | null = null;
+
+    const updateKeyboardHeight = () => {
+      if (frameId !== null) cancelAnimationFrame(frameId);
+
+      frameId = requestAnimationFrame(() => {
+        if (!isMobileOrTablet()) {
+          setKeyboardHeight(0);
+          return;
+        }
+
+        const layoutHeight =
+          layoutViewportHeightRef.current ?? window.innerHeight;
+        const visualBottom =
+          visualViewport.height + visualViewport.offsetTop;
+        const viewportDifference = Math.max(0, layoutHeight - visualBottom);
+
+        // Ignore small changes caused by browser chrome/address-bar movement.
+        const nextKeyboardHeight =
+          viewportDifference > 120 ? viewportDifference : 0;
+
+        setKeyboardHeight(nextKeyboardHeight);
+
+        // Refresh the baseline after the keyboard is closed.
+        if (nextKeyboardHeight === 0) {
+          layoutViewportHeightRef.current = Math.max(
+            document.documentElement.clientHeight,
+            window.innerHeight
+          );
+        }
+      });
+    };
+
+    const handleOrientationChange = () => {
+      window.setTimeout(() => {
+        layoutViewportHeightRef.current = Math.max(
+          document.documentElement.clientHeight,
+          window.innerHeight
+        );
+        updateKeyboardHeight();
+      }, 150);
+    };
+
+    updateKeyboardHeight();
+
+    visualViewport.addEventListener('resize', updateKeyboardHeight);
+    visualViewport.addEventListener('scroll', updateKeyboardHeight);
+    window.addEventListener('resize', updateKeyboardHeight);
+    window.addEventListener('orientationchange', handleOrientationChange);
+
+    return () => {
+      if (frameId !== null) cancelAnimationFrame(frameId);
+      visualViewport.removeEventListener('resize', updateKeyboardHeight);
+      visualViewport.removeEventListener('scroll', updateKeyboardHeight);
+      window.removeEventListener('resize', updateKeyboardHeight);
+      window.removeEventListener('orientationchange', handleOrientationChange);
+    };
+  }, []);
+
   // Close history when clicking outside on mobile
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -366,12 +442,12 @@ export default function ChatPage() {
   };
 
   return (
-    <div className="flex-1 w-full h-full flex flex-col md:items-center md:justify-center md:py-2">
+    <div className="relative flex-1 w-full h-full flex flex-col md:items-center md:justify-center md:py-2">
       {/* ─── RESPONSIVE CHAT CONTAINER ─── */}
-      <div className={cn(
-        "w-full md:max-w-6xl md:h-[90vh] md:max-h-[clamp(93.75rem,93.75rem,117.1875rem)] md:min-h-[clamp(62.5rem,62.5rem,78.125rem)] flex flex-col bg-card/90 backdrop-blur-2xl md:border md:border-border/80 md:rounded-3xl md:shadow-2xl md:overflow-hidden md:glow-sm z-10 rounded-2xl md:rounded-3xl overflow-hidden",
-        "h-[85dvh] md:h-[90vh]"
-      )}>
+      <div className="relative w-full md:max-w-6xl md:h-[90vh] flex flex-col">
+        <div className={cn(
+          "w-full h-full md:h-[90vh] md:max-h-[clamp(93.75rem,93.75rem,117.1875rem)] md:min-h-[clamp(62.5rem,62.5rem,78.125rem)] flex flex-col bg-card/90 backdrop-blur-2xl md:border md:border-border/80 md:rounded-3xl md:shadow-2xl md:overflow-hidden md:glow-sm z-10 rounded-2xl md:rounded-3xl overflow-hidden"
+        )}>
 
         {/* ─── EDGE TOGGLE ARROW (LEFT EDGE OF FIXED CARD) - REMOVED ─── */}
 
@@ -513,7 +589,15 @@ export default function ChatPage() {
         </div>
 
         {/* ─── MESSAGES AREA ─── */}
-        <div className="overflow-y-auto overflow-x-hidden p-4 md:p-8 lg:p-10 bg-background/50 pt-6 md:pt-8 lg:pt-10 flex-1 min-h-0">
+        <div
+          className="overflow-y-auto overflow-x-hidden p-4 md:p-8 lg:p-10 bg-background/50 pt-6 md:pt-8 lg:pt-10 flex-1 min-h-0"
+          style={{
+            paddingBottom:
+              window.innerWidth < 1024
+                ? `${Math.max(112, keyboardHeight + 112)}px`
+                : undefined,
+          }}
+        >
           <div className="max-w-5xl mx-auto space-y-6 md:space-y-8 h-full">
             {/* Rate Limit Alert */}
             {rateLimitInfo && (
@@ -642,48 +726,6 @@ export default function ChatPage() {
           </div>
         </div>
 
-        {/* ─── INPUT AREA ─── */}
-        <div className="border-t border-border/70 bg-muted/20 shrink-0">
-          <div className="p-2 md:p-3 lg:p-4 relative">
-            <div className="max-w-6xl mx-auto relative">
-              <div className="relative rounded-2xl border border-border/80 bg-card/60 shadow-lg px-4 md:px-4 lg:px-5 py-2 md:py-2 lg:py-3 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20 transition-all flex items-center gap-2 md:gap-3">
-                <Textarea
-                  ref={textareaRef}
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  onFocus={() => setInputFocused(true)}
-                  onBlur={() => setInputFocused(false)}
-                  placeholder={
-                    rateLimitInfo?.isLimitReached
-                      ? 'Daily message limit reached. Try again after reset time.'
-                      : !selectedKb
-                      ? 'Please select a KB to chat'
-                      : `Ask about ${kbs?.find((k) => k.id === selectedKb)?.display_name}...`
-                  }
-                  disabled={rateLimitInfo?.isLimitReached || !selectedKb}
-                  className="flex-1 border-0 bg-transparent shadow-none focus-visible:ring-0 resize-none py-3 md:py-3 lg:py-3 pl-2 md:pl-3 lg:pl-4 text-lg md:text-sm lg:text-base font-medium placeholder:text-muted-foreground text-foreground disabled:opacity-50 disabled:cursor-not-allowed min-h-[40px] md:min-h-[40px] lg:min-h-[40px] overflow-y-auto break-words whitespace-normal"
-                  rows={1}
-                  spellCheck="true"
-                />
-
-                <Button
-                  onClick={() => handleSend()}
-                  disabled={!input.trim() || chatMutation.isPending || rateLimitInfo?.isLimitReached || !selectedKb}
-                  size="icon"
-                  className="gap-2 shadow-lg shadow-primary/25 h-8 md:h-8 lg:h-8 w-8 md:w-8 lg:w-8 font-bold rounded-full flex-shrink-0 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {chatMutation.isPending ? (
-                    <Loader2 className="h-4 md:h-4 lg:h-4 w-4 md:w-4 lg:w-4 animate-spin" />
-                  ) : (
-                    <Send className="h-5 md:h-5 lg:h-5 w-5 md:w-5 lg:w-5" />
-                  )}
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
-
         {/* ─── SLIDE-IN HISTORY PANEL ─── */}
         {historyExpanded && (
           <>
@@ -784,6 +826,74 @@ export default function ChatPage() {
           </>
         )}
 
+        </div>
+
+        {/* ─────────────────────────────────────────────────────────
+            KEYBOARD-AWARE CHAT COMPOSER
+            Desktop: anchored to the bottom of the chat card.
+            Mobile/tablet: fixed to the visual viewport and follows
+            the on-screen keyboard using keyboardHeight.
+            ───────────────────────────────────────────────────────── */}
+        <div
+          className="z-40 fixed left-3 right-3 lg:absolute lg:left-0 lg:right-0 lg:bottom-0"
+          style={{
+            bottom:
+              window.innerWidth < 1024
+                ? `${keyboardHeight + 8}px`
+                : undefined,
+            paddingBottom:
+              window.innerWidth < 1024
+                ? 'env(safe-area-inset-bottom, 0px)'
+                : undefined,
+            transition:
+              window.innerWidth < 1024
+                ? keyboardHeight > 0
+                  ? 'bottom 80ms ease-out'
+                  : 'bottom 150ms ease-out'
+                : undefined,
+          }}
+        >
+          <div className="border-t border-border/70 bg-muted/20 backdrop-blur-xl shadow-2xl lg:rounded-none rounded-3xl">
+            <div className="p-2 md:p-3 lg:p-4 relative">
+              <div className="max-w-6xl mx-auto relative">
+                <div className="relative rounded-2xl border border-border/80 bg-card/95 lg:bg-card/60 shadow-lg px-4 md:px-4 lg:px-5 py-2 md:py-2 lg:py-3 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20 transition-all flex items-center gap-2 md:gap-3">
+                  <Textarea
+                    ref={textareaRef}
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    onFocus={() => setInputFocused(true)}
+                    onBlur={() => setInputFocused(false)}
+                    placeholder={
+                      rateLimitInfo?.isLimitReached
+                        ? 'Daily message limit reached. Try again after reset time.'
+                        : !selectedKb
+                        ? 'Please select a KB to chat'
+                        : `Ask about ${kbs?.find((k) => k.id === selectedKb)?.display_name}...`
+                    }
+                    disabled={rateLimitInfo?.isLimitReached || !selectedKb}
+                    className="flex-1 border-0 bg-transparent shadow-none focus-visible:ring-0 resize-none py-3 pl-2 md:pl-3 lg:pl-4 text-lg md:text-sm lg:text-base font-medium placeholder:text-muted-foreground text-foreground disabled:opacity-50 disabled:cursor-not-allowed min-h-[40px] max-h-[150px] overflow-y-auto break-words whitespace-normal"
+                    rows={1}
+                    spellCheck="true"
+                  />
+
+                  <Button
+                    onClick={() => handleSend()}
+                    disabled={!input.trim() || chatMutation.isPending || rateLimitInfo?.isLimitReached || !selectedKb}
+                    size="icon"
+                    className="gap-2 shadow-lg shadow-primary/25 h-8 md:h-8 lg:h-8 w-8 md:w-8 lg:w-8 font-bold rounded-full flex-shrink-0 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {chatMutation.isPending ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Send className="h-5 w-5" />
+                    )}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

@@ -42,13 +42,6 @@ export default function ChatPage() {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const chatPageRef = useRef<HTMLDivElement>(null);
 
-  // Android Chrome can change the scroll position of AppLayout's outer
-  // scroll container while the keyboard opens/closes. Save the exact
-  // position before focus and restore it after the keyboard closes.
-  const keyboardScrollParentRef = useRef<HTMLElement | null>(null);
-  const keyboardScrollTopRef = useRef(0);
-  const keyboardWindowScrollYRef = useRef(0);
-
   const navigate = useNavigate();
   const touchStartX = useRef(0);
   const touchEndX = useRef(0);
@@ -76,6 +69,14 @@ export default function ChatPage() {
   // We use that change to move only the composer above the keyboard.
   const [keyboardHeight, setKeyboardHeight] = useState(0);
   const layoutViewportHeightRef = useRef<number | null>(null);
+
+  // Concrete height used to force Android Chrome to repaint the mobile
+  // ChatPage immediately after the keyboard closes. Without this, Android
+  // can leave the flex layout in the keyboard-sized state until the next
+  // user interaction (exactly the behavior shown in your screenshot).
+  const [mobileLayoutHeight, setMobileLayoutHeight] = useState<number | null>(
+    null
+  );
 
   // Android Chrome: keep the document/layout viewport unchanged while
   // the software keyboard overlays it. When overlaysContent=true,
@@ -222,67 +223,90 @@ export default function ChatPage() {
   //
   // The messages area remains normally scrollable.
   // ─────────────────────────────────────────────────────────────
-  const getKeyboardScrollParent = (
-    element: HTMLElement | null
-  ): HTMLElement | null => {
-    let parent = element?.parentElement ?? null;
-
-    while (parent) {
-      const style = window.getComputedStyle(parent);
-
-      if (
-        /(auto|scroll)/.test(style.overflowY) &&
-        parent.scrollHeight > parent.clientHeight
-      ) {
-        return parent;
-      }
-
-      parent = parent.parentElement;
-    }
-
-    return null;
-  };
-
-  const saveKeyboardScrollPosition = () => {
-    const parent = getKeyboardScrollParent(chatPageRef.current);
-
-    keyboardScrollParentRef.current = parent;
-    keyboardScrollTopRef.current = parent?.scrollTop ?? 0;
-    keyboardWindowScrollYRef.current = window.scrollY;
-  };
-
-  const restoreKeyboardScrollPosition = () => {
-    const parent = keyboardScrollParentRef.current;
-    const scrollTop = keyboardScrollTopRef.current;
-    const windowScrollY = keyboardWindowScrollYRef.current;
-
-    if (parent) {
-      parent.scrollTo({
-        top: scrollTop,
-        left: parent.scrollLeft,
-        behavior: 'auto',
-      });
-    }
-
-    window.scrollTo({
-      top: windowScrollY,
-      left: window.scrollX,
-      behavior: 'auto',
-    });
-  };
-
-  // Android can finish its keyboard-close scroll animation after the
-  // keyboard height has already reached zero. Restore several times during
-  // that short period so the card returns to the exact original position.
   useEffect(() => {
+    if (window.innerWidth >= 1024) return;
+
+    const getMobileLayoutHeight = () => {
+      // AppLayout's mobile main starts below the 4rem (64px) header.
+      // Use the actual layout viewport, not visualViewport, because the
+      // keyboard is intentionally overlaying the page.
+      const viewportHeight = Math.max(
+        document.documentElement.clientHeight,
+        window.innerHeight
+      );
+
+      return Math.max(0, viewportHeight - 64);
+    };
+
+    const refreshMobileLayout = () => {
+      const nextHeight = getMobileLayoutHeight();
+
+      // Force a browser layout read before updating React state. This
+      // triggers the same layout recalculation that currently happens only
+      // after you tap somewhere on the page.
+      void document.documentElement.offsetHeight;
+
+      setMobileLayoutHeight(nextHeight);
+
+      // Force another layout pass after React commits the new height.
+      requestAnimationFrame(() => {
+        void document.documentElement.offsetHeight;
+      });
+    };
+
+    refreshMobileLayout();
+
+    const handleViewportResize = () => {
+      // During keyboard animation the height can change repeatedly.
+      // Wait until the current frame finishes before measuring.
+      requestAnimationFrame(refreshMobileLayout);
+    };
+
+    const handleWindowResize = () => {
+      requestAnimationFrame(refreshMobileLayout);
+    };
+
+    window.visualViewport?.addEventListener(
+      'resize',
+      handleViewportResize
+    );
+    window.addEventListener('resize', handleWindowResize);
+    window.addEventListener('orientationchange', handleWindowResize);
+
+    return () => {
+      window.visualViewport?.removeEventListener(
+        'resize',
+        handleViewportResize
+      );
+      window.removeEventListener('resize', handleWindowResize);
+      window.removeEventListener('orientationchange', handleWindowResize);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (window.innerWidth >= 1024) return;
     if (keyboardHeight > 120) return;
 
-    const textarea = textareaRef.current;
-    if (!textarea || document.activeElement === textarea) return;
+    // Android can report keyboardHeight=0 before it has finished its
+    // final layout/visual-viewport restoration. Refresh several frames so
+    // the card returns without requiring a tap.
+    const timers: number[] = [];
 
-    const timers = [0, 80, 180, 350, 600].map((delay) =>
-      window.setTimeout(restoreKeyboardScrollPosition, delay)
-    );
+    [0, 50, 150, 300, 500].forEach((delay) => {
+      const timer = window.setTimeout(() => {
+        const viewportHeight = Math.max(
+          document.documentElement.clientHeight,
+          window.innerHeight
+        );
+
+        setMobileLayoutHeight(Math.max(0, viewportHeight - 64));
+
+        // Force synchronous style/layout calculation.
+        void document.body.offsetHeight;
+      }, delay);
+
+      timers.push(timer);
+    });
 
     return () => timers.forEach(window.clearTimeout);
   }, [keyboardHeight]);
@@ -296,9 +320,6 @@ export default function ChatPage() {
     if (document.activeElement === textareaRef.current) {
       return;
     }
-
-    // Capture the exact position before Android gets a chance to alter it.
-    saveKeyboardScrollPosition();
 
     // Prevent the browser's default focus + scroll-into-view operation.
     event.preventDefault();
@@ -631,6 +652,11 @@ export default function ChatPage() {
         // Do not let browser touch scrolling interfere with the
         // pointer-controlled, preventScroll focus above.
         touchAction: 'pan-y',
+        // Give Android a concrete post-keyboard layout height so the
+        // flex/card geometry is recalculated immediately on keyboard close.
+        ...(window.innerWidth < 1024 && mobileLayoutHeight !== null
+          ? { height: `${mobileLayoutHeight}px` }
+          : {}),
       }}
     >
       {/* ─── RESPONSIVE CHAT CONTAINER ─── */}
@@ -1057,23 +1083,7 @@ export default function ChatPage() {
                     onKeyDown={handleKeyDown}
                     onPointerDown={handleInputPointerDown}
                     onFocus={() => setInputFocused(true)}
-                    onBlur={() => {
-                      setInputFocused(false);
-
-                      // Give Android one frame to finish closing the keyboard,
-                      // then restore the exact pre-keyboard page position.
-                      requestAnimationFrame(restoreKeyboardScrollPosition);
-
-                      window.setTimeout(
-                        restoreKeyboardScrollPosition,
-                        120
-                      );
-
-                      window.setTimeout(
-                        restoreKeyboardScrollPosition,
-                        350
-                      );
-                    }}
+                    onBlur={() => setInputFocused(false)}
                     placeholder={
                       rateLimitInfo?.isLimitReached
                         ? 'Daily message limit reached. Try again after reset time.'

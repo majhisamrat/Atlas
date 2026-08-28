@@ -42,6 +42,14 @@ export default function ChatPage() {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const chatPageRef = useRef<HTMLDivElement>(null);
 
+  // Android Chrome may scroll the AppLayout ancestor when the textarea
+  // receives focus. Save that exact position so we can restore it when
+  // the keyboard is dismissed with the Android Back button.
+  const keyboardScrollParentRef = useRef<HTMLElement | null>(null);
+  const keyboardScrollTopRef = useRef(0);
+  const keyboardWindowScrollYRef = useRef(0);
+  const previousKeyboardHeightRef = useRef(0);
+
   const navigate = useNavigate();
   const touchStartX = useRef(0);
   const touchEndX = useRef(0);
@@ -283,32 +291,90 @@ export default function ChatPage() {
     };
   }, []);
 
+  const findKeyboardScrollParent = (
+    element: HTMLElement | null
+  ): HTMLElement | null => {
+    let parent = element?.parentElement ?? null;
+
+    while (parent) {
+      const style = window.getComputedStyle(parent);
+
+      if (
+        /(auto|scroll)/.test(style.overflowY) &&
+        parent.scrollHeight > parent.clientHeight
+      ) {
+        return parent;
+      }
+
+      parent = parent.parentElement;
+    }
+
+    return null;
+  };
+
+  const saveKeyboardScrollPosition = () => {
+    const parent = findKeyboardScrollParent(chatPageRef.current);
+
+    keyboardScrollParentRef.current = parent;
+    keyboardScrollTopRef.current = parent?.scrollTop ?? 0;
+    keyboardWindowScrollYRef.current = window.scrollY;
+  };
+
+  const restoreKeyboardScrollPosition = () => {
+    const parent = keyboardScrollParentRef.current;
+
+    if (parent) {
+      parent.scrollTop = keyboardScrollTopRef.current;
+    }
+
+    window.scrollTo({
+      top: keyboardWindowScrollYRef.current,
+      left: window.scrollX,
+      behavior: 'auto',
+    });
+  };
+
   useEffect(() => {
     if (window.innerWidth >= 1024) return;
-    if (keyboardHeight > 120) return;
 
-    // Android can report keyboardHeight=0 before it has finished its
-    // final layout/visual-viewport restoration. Refresh several frames so
-    // the card returns without requiring a tap.
-    const timers: number[] = [];
+    const wasOpen = previousKeyboardHeightRef.current > 120;
+    const isClosed = keyboardHeight <= 120;
 
-    [0, 50, 150, 300, 500].forEach((delay) => {
-      const timer = window.setTimeout(() => {
-        const viewportHeight = Math.max(
-          document.documentElement.clientHeight,
-          window.innerHeight
-        );
+    if (isClosed && wasOpen) {
+      // Android Back hides the keyboard without necessarily blurring the
+      // textarea. Therefore blur/onBlur is NOT a reliable close signal.
+      // Restore the exact page position when the keyboard transitions
+      // from open -> closed.
+      const timers: number[] = [];
 
-        setMobileLayoutHeight(Math.max(0, viewportHeight - 64));
+      [0, 50, 120, 200, 350, 500].forEach((delay) => {
+        const timer = window.setTimeout(() => {
+          const viewportHeight = Math.max(
+            document.documentElement.clientHeight,
+            window.innerHeight
+          );
 
-        // Force synchronous style/layout calculation.
-        void document.body.offsetHeight;
-      }, delay);
+          setMobileLayoutHeight(Math.max(0, viewportHeight - 64));
 
-      timers.push(timer);
-    });
+          // Restore the scroll state AFTER Android's own close animation
+          // has had an opportunity to modify it.
+          restoreKeyboardScrollPosition();
 
-    return () => timers.forEach(window.clearTimeout);
+          // Force synchronous layout/reflow. This reproduces the browser
+          // repaint that currently only happens after a manual tap.
+          void document.documentElement.offsetHeight;
+          void document.body.offsetHeight;
+        }, delay);
+
+        timers.push(timer);
+      });
+
+      return () => timers.forEach(window.clearTimeout);
+    }
+
+    previousKeyboardHeightRef.current = keyboardHeight;
+
+    return undefined;
   }, [keyboardHeight]);
 
   const handleInputPointerDown = (
@@ -320,6 +386,10 @@ export default function ChatPage() {
     if (document.activeElement === textareaRef.current) {
       return;
     }
+
+    // Capture the exact outer-page position before Android starts the
+    // keyboard/focus operation.
+    saveKeyboardScrollPosition();
 
     // Prevent the browser's default focus + scroll-into-view operation.
     event.preventDefault();
@@ -1082,7 +1152,13 @@ export default function ChatPage() {
                     onChange={(e) => setInput(e.target.value)}
                     onKeyDown={handleKeyDown}
                     onPointerDown={handleInputPointerDown}
-                    onFocus={() => setInputFocused(true)}
+                    onFocus={() => {
+                      if (window.innerWidth < 1024) {
+                        saveKeyboardScrollPosition();
+                      }
+
+                      setInputFocused(true);
+                    }}
                     onBlur={() => setInputFocused(false)}
                     placeholder={
                       rateLimitInfo?.isLimitReached

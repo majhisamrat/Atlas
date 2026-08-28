@@ -70,10 +70,10 @@ export default function ChatPage() {
   const [keyboardHeight, setKeyboardHeight] = useState(0);
   const layoutViewportHeightRef = useRef<number | null>(null);
 
-  // Android Chrome's Virtual Keyboard API lets the keyboard overlay the
-  // page instead of resizing/repositioning the page. In overlay mode,
-  // visualViewport may not shrink, so use boundingRect as the authoritative
-  // keyboard height.
+  // Android Chrome: keep the document/layout viewport unchanged while
+  // the software keyboard overlays it. When overlaysContent=true,
+  // visualViewport may stay full-height, so the Virtual Keyboard API's
+  // boundingRect is the primary keyboard-height source.
   useEffect(() => {
     if (window.innerWidth >= 1024) return;
 
@@ -99,26 +99,25 @@ export default function ChatPage() {
     const previousValue = virtualKeyboard.overlaysContent;
     virtualKeyboard.overlaysContent = true;
 
-    const updateKeyboardGeometry = () => {
-      const rect = virtualKeyboard.boundingRect;
-      if (!rect) return;
-
-      setKeyboardHeight(Math.max(0, rect.height));
+    const updateKeyboardHeight = () => {
+      const height = virtualKeyboard.boundingRect?.height ?? 0;
+      setKeyboardHeight(Math.max(0, height));
     };
 
-    updateKeyboardGeometry();
+    updateKeyboardHeight();
 
     virtualKeyboard.addEventListener?.(
       'geometrychange',
-      updateKeyboardGeometry
+      updateKeyboardHeight
     );
 
     return () => {
       virtualKeyboard.removeEventListener?.(
         'geometrychange',
-        updateKeyboardGeometry
+        updateKeyboardHeight
       );
       virtualKeyboard.overlaysContent = previousValue;
+      setKeyboardHeight(0);
     };
   }, []);
 
@@ -128,15 +127,16 @@ export default function ChatPage() {
 
     const isMobileOrTablet = () => window.innerWidth < 1024;
 
-    // When VirtualKeyboard API is available, geometrychange above owns
-    // keyboardHeight. visualViewport is only a fallback for browsers that
-    // don't implement the API.
-    if (
-      (navigator as Navigator & { virtualKeyboard?: unknown })
-        .virtualKeyboard
-    ) {
-      return;
-    }
+    const hasVirtualKeyboard = Boolean(
+      (navigator as Navigator & {
+        virtualKeyboard?: unknown;
+      }).virtualKeyboard
+    );
+
+    // When Virtual Keyboard API is present, its geometrychange handler
+    // above is authoritative. Do not overwrite it with a full-height
+    // visualViewport measurement.
+    if (hasVirtualKeyboard) return;
 
     layoutViewportHeightRef.current = Math.max(
       document.documentElement.clientHeight,
@@ -957,7 +957,7 @@ export default function ChatPage() {
             overflowAnchor: 'none',
             bottom:
               window.innerWidth < 1024
-                ? `${keyboardHeight + 8}px`
+                ? `max(${keyboardHeight + 8}px, calc(env(keyboard-inset-height, 0px) + 8px))`
                 : undefined,
             paddingBottom:
               window.innerWidth < 1024

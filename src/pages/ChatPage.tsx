@@ -41,17 +41,6 @@ export default function ChatPage() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const chatPageRef = useRef<HTMLDivElement>(null);
-  const chatCardRef = useRef<HTMLDivElement>(null);
-
-  // When Android opens the keyboard it can scroll an ancestor before the
-  // visual viewport resize finishes. We freeze the card at its exact
-  // pre-keyboard screen position so the card itself cannot jump.
-  const [keyboardCardPosition, setKeyboardCardPosition] = useState<{
-    top: number;
-    left: number;
-    width: number;
-    height: number;
-  } | null>(null);
 
   const navigate = useNavigate();
   const touchStartX = useRef(0);
@@ -152,81 +141,44 @@ export default function ChatPage() {
   }, []);
 
   // ─────────────────────────────────────────────────────────────
-  // PREVENT ANDROID FROM MOVING THE CHAT CARD WHEN THE INPUT FOCUSES
+  // ANDROID KEYBOARD FOCUS FIX
   //
-  // AppLayout's mobile wrapper is overflow-y-auto. Android may scroll
-  // that wrapper to reveal a focused input. Our composer is already
-  // keyboard-aware, so that automatic scroll is unwanted.
+  // The important part is NOT to fight Android after it scrolls.
+  // Android automatically scrolls a scrollable ancestor when a focused
+  // input is near the bottom of the viewport.
   //
-  // We do two things:
-  //   1. Keep the outer AppLayout wrapper from being user-scrollable.
-  //   2. Freeze the chat card at its exact screen position while the
-  //      keyboard is opening.
+  // We take control of the focus from the user's pointer/touch event and
+  // call focus({ preventScroll: true }). This tells the browser to open
+  // the keyboard without scrolling the ChatPage to reveal the input.
   //
-  // The messages container inside ChatPage remains scrollable.
+  // The messages area remains normally scrollable.
   // ─────────────────────────────────────────────────────────────
-  useEffect(() => {
+  const handleInputPointerDown = (
+    event: React.PointerEvent<HTMLTextAreaElement>
+  ) => {
     if (window.innerWidth >= 1024) return;
 
-    const page = chatPageRef.current;
-    if (!page) return;
-
-    let parent = page.parentElement;
-
-    while (parent) {
-      const style = window.getComputedStyle(parent);
-
-      if (
-        /(auto|scroll)/.test(style.overflowY) &&
-        parent !== page
-      ) {
-        break;
-      }
-
-      parent = parent.parentElement;
+    // Let an already-focused textarea behave normally.
+    if (document.activeElement === textareaRef.current) {
+      return;
     }
 
-    if (!parent) return;
+    // Prevent the browser's default focus + scroll-into-view operation.
+    event.preventDefault();
 
-    const previousOverflowY = parent.style.overflowY;
-    const previousOverscrollBehaviorY = parent.style.overscrollBehaviorY;
-    const previousOverflowAnchor = parent.style.overflowAnchor;
+    const textarea = textareaRef.current;
+    if (!textarea) return;
 
-    parent.style.overflowY = 'hidden';
-    parent.style.overscrollBehaviorY = 'none';
-    parent.style.overflowAnchor = 'none';
+    // Focus as part of the user's pointer gesture, but explicitly prevent
+    // the browser from scrolling any ancestor to reveal the textarea.
+    textarea.focus({ preventScroll: true });
 
-    return () => {
-      parent.style.overflowY = previousOverflowY;
-      parent.style.overscrollBehaviorY = previousOverscrollBehaviorY;
-      parent.style.overflowAnchor = previousOverflowAnchor;
-    };
-  }, []);
-
-  // Keep the card locked until the keyboard has completely closed.
-  useEffect(() => {
-    if (keyboardHeight === 0) {
-      setKeyboardCardPosition(null);
-    }
-  }, [keyboardHeight]);
-
-  // Capture the card's position BEFORE Android has a chance to scroll
-  // the page as a result of focusing the textarea.
-  const handleInputFocus = () => {
     setInputFocused(true);
 
-    if (window.innerWidth >= 1024) return;
-
-    const card = chatCardRef.current;
-    if (!card) return;
-
-    const rect = card.getBoundingClientRect();
-
-    setKeyboardCardPosition({
-      top: rect.top,
-      left: rect.left,
-      width: rect.width,
-      height: rect.height,
+    // Restore the page's scroll position on the next frame as an extra
+    // safeguard for Android Chrome devices that perform a delayed scroll.
+    requestAnimationFrame(() => {
+      textarea.focus({ preventScroll: true });
     });
   };
 
@@ -537,31 +489,19 @@ export default function ChatPage() {
     <div
       ref={chatPageRef}
       className="relative flex-1 w-full h-full flex flex-col md:items-center md:justify-center md:py-2"
-      style={{ overflowAnchor: 'none' }}
+      style={{
+        overflowAnchor: 'none',
+        // Do not let browser touch scrolling interfere with the
+        // pointer-controlled, preventScroll focus above.
+        touchAction: 'pan-y',
+      }}
     >
       {/* ─── RESPONSIVE CHAT CONTAINER ─── */}
       <div className="relative w-full md:max-w-6xl md:h-[90vh] flex flex-col">
         <div
-          ref={chatCardRef}
           className={cn(
             "w-full h-full md:h-[90vh] md:max-h-[clamp(93.75rem,93.75rem,117.1875rem)] md:min-h-[clamp(62.5rem,62.5rem,78.125rem)] flex flex-col bg-card/90 backdrop-blur-2xl md:border md:border-border/80 md:rounded-3xl md:shadow-2xl md:overflow-hidden md:glow-sm z-10 rounded-2xl md:rounded-3xl overflow-hidden"
           )}
-          style={
-            keyboardHeight > 120 && keyboardCardPosition
-              ? {
-                  position: 'fixed',
-                  top: `${keyboardCardPosition.top}px`,
-                  left: `${keyboardCardPosition.left}px`,
-                  width: `${keyboardCardPosition.width}px`,
-                  height: `${keyboardCardPosition.height}px`,
-                  maxHeight: 'none',
-                  minHeight: '0',
-                  margin: '0',
-                  overflowAnchor: 'none',
-                  zIndex: 20,
-                }
-              : undefined
-          }
         >
 
         {/* ─── EDGE TOGGLE ARROW (LEFT EDGE OF FIXED CARD) - REMOVED ─── */}
@@ -978,7 +918,8 @@ export default function ChatPage() {
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
                     onKeyDown={handleKeyDown}
-                    onFocus={handleInputFocus}
+                    onPointerDown={handleInputPointerDown}
+                    onFocus={() => setInputFocused(true)}
                     onBlur={() => setInputFocused(false)}
                     placeholder={
                       rateLimitInfo?.isLimitReached

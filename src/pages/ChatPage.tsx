@@ -42,6 +42,13 @@ export default function ChatPage() {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const chatPageRef = useRef<HTMLDivElement>(null);
 
+  // Android Chrome can change the scroll position of AppLayout's outer
+  // scroll container while the keyboard opens/closes. Save the exact
+  // position before focus and restore it after the keyboard closes.
+  const keyboardScrollParentRef = useRef<HTMLElement | null>(null);
+  const keyboardScrollTopRef = useRef(0);
+  const keyboardWindowScrollYRef = useRef(0);
+
   const navigate = useNavigate();
   const touchStartX = useRef(0);
   const touchEndX = useRef(0);
@@ -215,6 +222,71 @@ export default function ChatPage() {
   //
   // The messages area remains normally scrollable.
   // ─────────────────────────────────────────────────────────────
+  const getKeyboardScrollParent = (
+    element: HTMLElement | null
+  ): HTMLElement | null => {
+    let parent = element?.parentElement ?? null;
+
+    while (parent) {
+      const style = window.getComputedStyle(parent);
+
+      if (
+        /(auto|scroll)/.test(style.overflowY) &&
+        parent.scrollHeight > parent.clientHeight
+      ) {
+        return parent;
+      }
+
+      parent = parent.parentElement;
+    }
+
+    return null;
+  };
+
+  const saveKeyboardScrollPosition = () => {
+    const parent = getKeyboardScrollParent(chatPageRef.current);
+
+    keyboardScrollParentRef.current = parent;
+    keyboardScrollTopRef.current = parent?.scrollTop ?? 0;
+    keyboardWindowScrollYRef.current = window.scrollY;
+  };
+
+  const restoreKeyboardScrollPosition = () => {
+    const parent = keyboardScrollParentRef.current;
+    const scrollTop = keyboardScrollTopRef.current;
+    const windowScrollY = keyboardWindowScrollYRef.current;
+
+    if (parent) {
+      parent.scrollTo({
+        top: scrollTop,
+        left: parent.scrollLeft,
+        behavior: 'auto',
+      });
+    }
+
+    window.scrollTo({
+      top: windowScrollY,
+      left: window.scrollX,
+      behavior: 'auto',
+    });
+  };
+
+  // Android can finish its keyboard-close scroll animation after the
+  // keyboard height has already reached zero. Restore several times during
+  // that short period so the card returns to the exact original position.
+  useEffect(() => {
+    if (keyboardHeight > 120) return;
+
+    const textarea = textareaRef.current;
+    if (!textarea || document.activeElement === textarea) return;
+
+    const timers = [0, 80, 180, 350, 600].map((delay) =>
+      window.setTimeout(restoreKeyboardScrollPosition, delay)
+    );
+
+    return () => timers.forEach(window.clearTimeout);
+  }, [keyboardHeight]);
+
   const handleInputPointerDown = (
     event: React.PointerEvent<HTMLTextAreaElement>
   ) => {
@@ -224,6 +296,9 @@ export default function ChatPage() {
     if (document.activeElement === textareaRef.current) {
       return;
     }
+
+    // Capture the exact position before Android gets a chance to alter it.
+    saveKeyboardScrollPosition();
 
     // Prevent the browser's default focus + scroll-into-view operation.
     event.preventDefault();
@@ -982,7 +1057,23 @@ export default function ChatPage() {
                     onKeyDown={handleKeyDown}
                     onPointerDown={handleInputPointerDown}
                     onFocus={() => setInputFocused(true)}
-                    onBlur={() => setInputFocused(false)}
+                    onBlur={() => {
+                      setInputFocused(false);
+
+                      // Give Android one frame to finish closing the keyboard,
+                      // then restore the exact pre-keyboard page position.
+                      requestAnimationFrame(restoreKeyboardScrollPosition);
+
+                      window.setTimeout(
+                        restoreKeyboardScrollPosition,
+                        120
+                      );
+
+                      window.setTimeout(
+                        restoreKeyboardScrollPosition,
+                        350
+                      );
+                    }}
                     placeholder={
                       rateLimitInfo?.isLimitReached
                         ? 'Daily message limit reached. Try again after reset time.'

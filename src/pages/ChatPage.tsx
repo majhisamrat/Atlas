@@ -1090,7 +1090,7 @@ export default function ChatPage() {
             the on-screen keyboard using keyboardHeight.
             ───────────────────────────────────────────────────────── */}
         <div
-          className="z-40 fixed left-3 right-3 lg:absolute lg:left-0 lg:right-0 lg:bottom-0"
+          className="z-40 fixed left-3 right-3 lg:absolute lg:left-0 lg:right-0    lg:bottom-0 translate-y-0"
           style={{
             overflowAnchor: 'none',
             bottom:
@@ -1110,7 +1110,7 @@ export default function ChatPage() {
           }}
         >
           <div className="border-t border-border/70 bg-muted/20 backdrop-blur-xl shadow-2xl lg:rounded-none rounded-3xl">
-            <div className="p-2 md:p-3 lg:p-4 relative">
+            <div className="p-0 md:p-0 lg:p-4 relative">
               <div className="max-w-6xl mx-auto relative">
                 <div className="relative rounded-2xl border border-border/80 bg-card/95 lg:bg-card/60 shadow-lg px-4 md:px-4 lg:px-5 py-2 md:py-2 lg:py-3 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20 transition-all flex items-center gap-2 md:gap-3">
                   <Textarea

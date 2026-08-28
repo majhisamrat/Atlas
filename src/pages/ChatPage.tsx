@@ -42,6 +42,13 @@ export default function ChatPage() {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const chatPageRef = useRef<HTMLDivElement>(null);
 
+  // Android can temporarily change the outer page scroll when the keyboard
+  // opens. Save it before focus and restore it after the keyboard closes.
+  const keyboardScrollParentRef = useRef<HTMLElement | null>(null);
+  const keyboardScrollTopRef = useRef(0);
+  const keyboardWindowScrollYRef = useRef(0);
+  const wasKeyboardOpenRef = useRef(false);
+
   const navigate = useNavigate();
   const touchStartX = useRef(0);
   const touchEndX = useRef(0);
@@ -140,6 +147,78 @@ export default function ChatPage() {
     };
   }, []);
 
+  // Find the nearest scrollable ancestor of ChatPage.
+  const findScrollableAncestor = (
+    element: HTMLElement | null
+  ): HTMLElement | null => {
+    let parent = element?.parentElement ?? null;
+
+    while (parent) {
+      const style = window.getComputedStyle(parent);
+      const isScrollable =
+        /(auto|scroll)/.test(style.overflowY) &&
+        parent.scrollHeight > parent.clientHeight;
+
+      if (isScrollable) return parent;
+
+      parent = parent.parentElement;
+    }
+
+    return null;
+  };
+
+  // When the keyboard closes, put the outer page exactly back where it was
+  // before Android focused the input. This fixes the "card stays too high"
+  // state shown after the keyboard disappears.
+  useEffect(() => {
+    const keyboardIsOpen = keyboardHeight > 120;
+
+    if (keyboardIsOpen) {
+      wasKeyboardOpenRef.current = true;
+      return;
+    }
+
+    if (!wasKeyboardOpenRef.current) return;
+
+    wasKeyboardOpenRef.current = false;
+
+    const parent = keyboardScrollParentRef.current;
+    const savedParentScrollTop = keyboardScrollTopRef.current;
+    const savedWindowScrollY = keyboardWindowScrollYRef.current;
+
+    // Android Chrome may finish restoring its visual viewport a frame or
+    // two after visualViewport reports the keyboard as closed.
+    let frame1 = 0;
+    let frame2 = 0;
+
+    const restore = () => {
+      if (parent) {
+        parent.scrollTop = savedParentScrollTop;
+      }
+
+      window.scrollTo({
+        top: savedWindowScrollY,
+        left: window.scrollX,
+        behavior: 'auto',
+      });
+    };
+
+    restore();
+
+    frame1 = requestAnimationFrame(() => {
+      restore();
+
+      frame2 = requestAnimationFrame(() => {
+        restore();
+      });
+    });
+
+    return () => {
+      cancelAnimationFrame(frame1);
+      cancelAnimationFrame(frame2);
+    };
+  }, [keyboardHeight]);
+
   // ─────────────────────────────────────────────────────────────
   // ANDROID KEYBOARD FOCUS FIX
   //
@@ -162,6 +241,14 @@ export default function ChatPage() {
     if (document.activeElement === textareaRef.current) {
       return;
     }
+
+    // Save the layout scroll position BEFORE focus. Android can change
+    // this value while opening the keyboard.
+    const scrollParent = findScrollableAncestor(chatPageRef.current);
+
+    keyboardScrollParentRef.current = scrollParent;
+    keyboardScrollTopRef.current = scrollParent?.scrollTop ?? 0;
+    keyboardWindowScrollYRef.current = window.scrollY;
 
     // Prevent the browser's default focus + scroll-into-view operation.
     event.preventDefault();

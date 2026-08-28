@@ -70,10 +70,10 @@ export default function ChatPage() {
   const [keyboardHeight, setKeyboardHeight] = useState(0);
   const layoutViewportHeightRef = useRef<number | null>(null);
 
-  // Android Chrome normally resizes/scrolls the page when the software
-  // keyboard opens. For this chat UI we want the keyboard to OVERLAY the
-  // page instead: the Atlas card stays fixed, while only the composer
-  // moves using visualViewport/keyboardHeight.
+  // Android Chrome's Virtual Keyboard API lets the keyboard overlay the
+  // page instead of resizing/repositioning the page. In overlay mode,
+  // visualViewport may not shrink, so use boundingRect as the authoritative
+  // keyboard height.
   useEffect(() => {
     if (window.innerWidth >= 1024) return;
 
@@ -81,6 +81,15 @@ export default function ChatPage() {
       navigator as Navigator & {
         virtualKeyboard?: {
           overlaysContent: boolean;
+          boundingRect?: DOMRectReadOnly;
+          addEventListener?: (
+            type: 'geometrychange',
+            listener: () => void
+          ) => void;
+          removeEventListener?: (
+            type: 'geometrychange',
+            listener: () => void
+          ) => void;
         };
       }
     ).virtualKeyboard;
@@ -88,10 +97,27 @@ export default function ChatPage() {
     if (!virtualKeyboard) return;
 
     const previousValue = virtualKeyboard.overlaysContent;
-
     virtualKeyboard.overlaysContent = true;
 
+    const updateKeyboardGeometry = () => {
+      const rect = virtualKeyboard.boundingRect;
+      if (!rect) return;
+
+      setKeyboardHeight(Math.max(0, rect.height));
+    };
+
+    updateKeyboardGeometry();
+
+    virtualKeyboard.addEventListener?.(
+      'geometrychange',
+      updateKeyboardGeometry
+    );
+
     return () => {
+      virtualKeyboard.removeEventListener?.(
+        'geometrychange',
+        updateKeyboardGeometry
+      );
       virtualKeyboard.overlaysContent = previousValue;
     };
   }, []);
@@ -101,6 +127,16 @@ export default function ChatPage() {
     if (!visualViewport) return;
 
     const isMobileOrTablet = () => window.innerWidth < 1024;
+
+    // When VirtualKeyboard API is available, geometrychange above owns
+    // keyboardHeight. visualViewport is only a fallback for browsers that
+    // don't implement the API.
+    if (
+      (navigator as Navigator & { virtualKeyboard?: unknown })
+        .virtualKeyboard
+    ) {
+      return;
+    }
 
     layoutViewportHeightRef.current = Math.max(
       document.documentElement.clientHeight,

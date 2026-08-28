@@ -41,6 +41,7 @@ export default function ChatPage() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const chatPageRef = useRef<HTMLDivElement>(null);
+  const chatContainerRef = useRef<HTMLDivElement>(null);
 
   const navigate = useNavigate();
   const touchStartX = useRef(0);
@@ -347,6 +348,42 @@ export default function ChatPage() {
 
     return () => timers.forEach(window.clearTimeout);
   }, [keyboardHeight]);
+
+  // ─────────────────────────────────────────────────────────────
+  // COMPOSER HORIZONTAL ALIGNMENT
+  // The composer uses position:fixed on mobile so it can float above
+  // the keyboard, which means its left/right offsets are measured from
+  // the viewport, not from this (possibly padded) chat container. Measure
+  // the container's actual edges so the composer lines up with the card
+  // instead of drifting off by whatever padding sits outside this page.
+  // ─────────────────────────────────────────────────────────────
+  const [composerBounds, setComposerBounds] = useState<{
+    left: number;
+    width: number;
+  } | null>(null);
+
+  useEffect(() => {
+    if (window.innerWidth >= 1024) return;
+
+    const updateComposerBounds = () => {
+      const rect = chatContainerRef.current?.getBoundingClientRect();
+      if (rect) {
+        setComposerBounds({ left: rect.left, width: rect.width });
+      }
+    };
+
+    updateComposerBounds();
+
+    window.addEventListener('resize', updateComposerBounds);
+    window.addEventListener('orientationchange', updateComposerBounds);
+    window.visualViewport?.addEventListener('resize', updateComposerBounds);
+
+    return () => {
+      window.removeEventListener('resize', updateComposerBounds);
+      window.removeEventListener('orientationchange', updateComposerBounds);
+      window.visualViewport?.removeEventListener('resize', updateComposerBounds);
+    };
+  }, [mobileLayoutHeight]);
 
   const handleInputPointerDown = (
     event: React.PointerEvent<HTMLTextAreaElement>
@@ -680,6 +717,10 @@ export default function ChatPage() {
     }
   };
 
+  // Rest higher above the bottom edge when the keyboard is closed (clear of
+  // gesture bars / thumb reach); tuck in tighter once the keyboard is open.
+  const composerRestGap = keyboardHeight > 0 ? 8 : 20;
+
   return (
     <div
       ref={chatPageRef}
@@ -697,7 +738,7 @@ export default function ChatPage() {
       }}
     >
       {/* ─── RESPONSIVE CHAT CONTAINER ─── */}
-      <div className="relative w-full md:max-w-6xl h-full md:h-[90vh] flex flex-col">
+      <div ref={chatContainerRef} className="relative w-full md:max-w-6xl h-full md:h-[90vh] flex flex-col">
         <div
           className={cn(
             "w-full h-full md:h-[90vh] md:max-h-[clamp(93.75rem,93.75rem,117.1875rem)] md:min-h-[clamp(62.5rem,62.5rem,78.125rem)] flex flex-col bg-card/90 backdrop-blur-2xl md:border md:border-border/80 md:rounded-3xl md:shadow-2xl md:overflow-hidden md:glow-sm z-10 rounded-2xl md:rounded-3xl overflow-hidden"
@@ -1093,9 +1134,16 @@ export default function ChatPage() {
           className="z-40 fixed left-3 right-3 lg:absolute lg:left-0 lg:right-0    lg:bottom-0 translate-y-0"
           style={{
             overflowAnchor: 'none',
+            ...(window.innerWidth < 1024 && composerBounds
+              ? {
+                  left: `${composerBounds.left}px`,
+                  right: 'auto',
+                  width: `${composerBounds.width}px`,
+                }
+              : {}),
             bottom:
               window.innerWidth < 1024
-                ? `max(${keyboardHeight + 8}px, calc(env(keyboard-inset-height, 0px) + 8px))`
+                ? `max(${keyboardHeight + composerRestGap}px, calc(env(keyboard-inset-height, 0px) + ${composerRestGap}px))`
                 : undefined,
             paddingBottom:
               window.innerWidth < 1024

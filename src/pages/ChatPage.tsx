@@ -697,7 +697,7 @@ export default function ChatPage() {
       }}
     >
       {/* ─── RESPONSIVE CHAT CONTAINER ─── */}
-      <div className="relative w-full md:max-w-6xl md:h-[90vh] flex flex-col">
+      <div className="relative w-full md:max-w-6xl h-[calc(100%-80px)] md:h-[90vh] flex flex-col">
         <div
           className={cn(
             "w-full h-full md:h-[90vh] md:max-h-[clamp(93.75rem,93.75rem,117.1875rem)] md:min-h-[clamp(62.5rem,62.5rem,78.125rem)] flex flex-col bg-card/90 backdrop-blur-2xl md:border md:border-border/80 md:rounded-3xl md:shadow-2xl md:overflow-hidden md:glow-sm z-10 rounded-2xl md:rounded-3xl overflow-hidden"

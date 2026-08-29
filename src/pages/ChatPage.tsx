@@ -360,6 +360,7 @@ export default function ChatPage() {
   const [composerBounds, setComposerBounds] = useState<{
     left: number;
     width: number;
+    bottom: number;
   } | null>(null);
 
   useEffect(() => {
@@ -368,7 +369,15 @@ export default function ChatPage() {
     const updateComposerBounds = () => {
       const rect = chatContainerRef.current?.getBoundingClientRect();
       if (rect) {
-        setComposerBounds({ left: rect.left, width: rect.width });
+        setComposerBounds({
+          left: rect.left,
+          width: rect.width,
+          // How far the card's own bottom edge already sits above the
+          // true screen edge (whatever ambient padding the page adds).
+          // Resting the composer here keeps it flush with the card
+          // instead of floating above it and exposing the card's corner.
+          bottom: Math.max(0, window.innerHeight - rect.bottom),
+        });
       }
     };
 
@@ -717,14 +726,16 @@ export default function ChatPage() {
     }
   };
 
-  // Rest higher above the bottom edge when the keyboard is closed (clear of
-  // gesture bars / thumb reach); tuck in tighter once the keyboard is open.
-  const composerRestGap = keyboardHeight > 0 ? 8 : 20;
+  // Rest flush with the card's own bottom edge when the keyboard is closed
+  // (whatever that measured offset is); tuck in tight above the keyboard
+  // once it opens, since the composer detaches from the card at that point.
+  const composerRestGap =
+    keyboardHeight > 0 ? 8 : composerBounds?.bottom ?? 20;
 
   return (
     <div
       ref={chatPageRef}
-      className="relative flex-1 w-full h-full flex flex-col md:items-center md:justify-center md:py-2"
+      className="relative flex-1 w-full h-full flex flex-col overflow-hidden md:items-center md:justify-center md:py-2"
       style={{
         overflowAnchor: 'none',
         // Do not let browser touch scrolling interfere with the
@@ -1145,10 +1156,6 @@ export default function ChatPage() {
               window.innerWidth < 1024
                 ? `max(${keyboardHeight + composerRestGap}px, calc(env(keyboard-inset-height, 0px) + ${composerRestGap}px))`
                 : undefined,
-            paddingBottom:
-              window.innerWidth < 1024
-                ? 'env(safe-area-inset-bottom, 0px)'
-                : undefined,
             transition:
               window.innerWidth < 1024
                 ? keyboardHeight > 0
@@ -1157,7 +1164,19 @@ export default function ChatPage() {
                 : undefined,
           }}
         >
-          <div className="border-t border-border/70 bg-muted/20 backdrop-blur-xl shadow-2xl lg:rounded-none rounded-3xl">
+          {/* Safe-area padding lives on the visible pill (not the invisible
+              fixed wrapper above) so the pill's own background extends all
+              the way down to the wrapper's edge — flush with the card,
+              instead of leaving a gap that exposes the card underneath. */}
+          <div
+            className="border-t border-border/70 bg-muted/20 backdrop-blur-xl shadow-2xl lg:rounded-none rounded-3xl"
+            style={{
+              paddingBottom:
+                window.innerWidth < 1024
+                  ? 'env(safe-area-inset-bottom, 0px)'
+                  : undefined,
+            }}
+          >
             <div className="p-0 md:p-0 lg:p-4 relative">
               <div className="max-w-6xl mx-auto relative">
                 <div className="relative rounded-2xl border border-border/80 bg-card/95 lg:bg-card/60 shadow-lg px-4 md:px-4 lg:px-5 py-2 md:py-2 lg:py-3 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20 transition-all flex items-center gap-2 md:gap-3">

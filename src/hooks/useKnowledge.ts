@@ -57,7 +57,7 @@ export function useUploadDocument() {
     onSuccess: (_, variables) => {
       qc.invalidateQueries({ queryKey: ['knowledge-base', variables.kbId] });
       qc.invalidateQueries({ queryKey: ['upload-history', variables.kbId] });
-      toast.success('Document uploaded');
+      toast.success('Uploading document...');
     },
   });
 }
@@ -85,6 +85,19 @@ export function useReindexKb() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['knowledge-bases'] });
       toast.success('Reindexing queued');
+    },
+  });
+}
+
+export function useDeleteUpload() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ kbId, uploadId }: { kbId: string; uploadId: string }) =>
+      knowledgeApi.deleteUpload(kbId, uploadId),
+    onSuccess: (_, variables) => {
+      qc.invalidateQueries({ queryKey: ['upload-history', variables.kbId] });
+      qc.invalidateQueries({ queryKey: ['knowledge-base', variables.kbId] });
+      toast.success('Upload deleted');
     },
   });
 }

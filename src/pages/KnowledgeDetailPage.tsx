@@ -6,6 +6,7 @@ import {
   useDeleteKnowledgeBase,
   useUploadDocument,
   useReindexKb,
+  useDeleteUpload,
 } from '@/hooks/useKnowledge';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { CardSkeleton } from '@/components/shared/LoadingState';
@@ -35,9 +36,12 @@ export default function KnowledgeDetailPage() {
   const deleteKb = useDeleteKnowledgeBase();
   const uploadDoc = useUploadDocument();
   const reindexKb = useReindexKb();
+  const deleteUpload = useDeleteUpload();
 
   const [uploadOpen, setUploadOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleteUploadId, setDeleteUploadId] = useState<string | null>(null);
+  const [deleteUploadOpen, setDeleteUploadOpen] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const [displayName, setDisplayName] = useState('');
   const [tags, setTags] = useState('');
@@ -112,6 +116,13 @@ export default function KnowledgeDetailPage() {
   const handleDelete = async () => {
     await deleteKb.mutateAsync(id!);
     navigate('/knowledge');
+  };
+
+  const handleDeleteUpload = async () => {
+    if (!deleteUploadId) return;
+    await deleteUpload.mutateAsync({ kbId: id!, uploadId: deleteUploadId });
+    setDeleteUploadOpen(false);
+    setDeleteUploadId(null);
   };
 
   const stats = [
@@ -247,6 +258,20 @@ export default function KnowledgeDetailPage() {
                           {formatMs(u.processing_duration_ms)}
                         </span>
                       )}
+
+                      {/* Delete Upload Button - Red Icon */}
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors"
+                        title="Delete this upload"
+                        onClick={() => {
+                          setDeleteUploadId(u.id);
+                          setDeleteUploadOpen(true);
+                        }}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
                     </div>
                   </CardContent>
                 </Card>
@@ -344,6 +369,33 @@ export default function KnowledgeDetailPage() {
             <Button variant="outline" onClick={() => setDeleteOpen(false)}>Cancel</Button>
             <Button variant="destructive" onClick={handleDelete} disabled={deleteKb.isPending} className="gap-2">
               {deleteKb.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Delete Permanently'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Upload Modal */}
+      <Dialog open={deleteUploadOpen} onOpenChange={setDeleteUploadOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-red-400">
+              <Trash2 className="h-5 w-5" />
+              Delete Upload?
+            </DialogTitle>
+            <DialogDescription>
+              This will permanently delete this document and its vector embeddings. This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription className="text-xs">
+              All chunks and vectors associated with this upload will be permanently removed.
+            </AlertDescription>
+          </Alert>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteUploadOpen(false)}>Cancel</Button>
+            <Button variant="destructive" onClick={handleDeleteUpload} disabled={deleteUpload.isPending} className="gap-2">
+              {deleteUpload.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Delete Upload'}
             </Button>
           </DialogFooter>
         </DialogContent>

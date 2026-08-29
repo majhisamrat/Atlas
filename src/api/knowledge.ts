@@ -47,4 +47,9 @@ export const knowledgeApi = {
 
   reindex: (kbId: string) =>
     apiClient.post<ReindexResponse>(`/knowledge/${kbId}/reindex`).then((r) => r.data),
+
+  deleteUpload: (kbId: string, uploadId: string) =>
+    apiClient.delete<{ success: boolean; deleted_upload_id: string; message: string }>(
+      `/knowledge/${kbId}/upload/${uploadId}`,
+    ).then((r) => r.data),
 };

@@ -1092,12 +1092,12 @@ export default function ChatPage() {
                         <p className="text-sm mt-1">Start chatting to see your history here</p>
                       </div>
                     ) : (
-                      <div className="grid grid-cols-1 gap-3">
+                      <div className="grid grid-cols-1 gap-4">
                         {chatHistoryData.map((session) => (
                           <div
                             key={session.session_id}
                             className={cn(
-                              "group relative p-4 rounded-xl cursor-pointer transition-all duration-200 border bg-background/80 hover:shadow-md",
+                              "group relative p-5 rounded-xl cursor-pointer transition-all duration-200 border bg-background/80 hover:shadow-md",
                               sessionId === session.session_id 
                                 ? "border-primary/50 shadow-sm ring-2 ring-primary/20 bg-primary/5" 
                                 : "border-border/60 hover:bg-muted/30 hover:border-border"
@@ -1106,10 +1106,10 @@ export default function ChatPage() {
                           >
                             {/* Session Content */}
                             <div className="pr-8">
-                              <div className="font-semibold text-sm text-foreground truncate mb-2">
+                              <div className="font-semibold text-lg text-foreground truncate mb-3">
                                 {session.title || 'Untitled Chat'}
                               </div>
-                              <div className="space-y-2 text-xs text-muted-foreground">
+                              <div className="space-y-2 text-base text-muted-foreground">
                                 <div className="flex items-center gap-2">
                                   <BookOpen className="h-3 w-3 flex-shrink-0" />
                                   <span className="truncate">{session.knowledge_base_name}</span>
@@ -1117,7 +1117,7 @@ export default function ChatPage() {
                                 <div className="flex items-center justify-between">
                                   <span className="flex items-center gap-1">
                                     <MessageSquare className="h-3 w-3" />
-                                    {session.message_count} messages
+                                    Messages: {Math.ceil(session.message_count / 2)}
                                   </span>
                                   <span>{new Date(session.created_at).toLocaleDateString()}</span>
                                 </div>

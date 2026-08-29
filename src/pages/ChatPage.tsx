@@ -363,12 +363,26 @@ export default function ChatPage() {
     bottom: number;
   } | null>(null);
 
-  useEffect(() => {
-    if (window.innerWidth >= 1024) return;
+  // Mirrors the chat card's own on-screen top/height. The slide-in history
+  // panel has to live outside the blurred card (see the note near its JSX
+  // below) to avoid being clipped, but that means it no longer inherits the
+  // card's box automatically — without this it stretches edge-to-edge over
+  // the whole viewport, riding up over the top navbar and hanging down past
+  // the composer. Measuring the card's real rect and applying it as the
+  // panel's top/height keeps it sized to "the actual card", not the screen.
+  const [cardBounds, setCardBounds] = useState<{
+    top: number;
+    height: number;
+  } | null>(null);
 
-    const updateComposerBounds = () => {
+  useEffect(() => {
+    const updateBounds = () => {
       const rect = chatContainerRef.current?.getBoundingClientRect();
-      if (rect) {
+      if (!rect) return;
+
+      setCardBounds({ top: rect.top, height: rect.height });
+
+      if (window.innerWidth < 1024) {
         setComposerBounds({
           left: rect.left,
           width: rect.width,
@@ -381,16 +395,16 @@ export default function ChatPage() {
       }
     };
 
-    updateComposerBounds();
+    updateBounds();
 
-    window.addEventListener('resize', updateComposerBounds);
-    window.addEventListener('orientationchange', updateComposerBounds);
-    window.visualViewport?.addEventListener('resize', updateComposerBounds);
+    window.addEventListener('resize', updateBounds);
+    window.addEventListener('orientationchange', updateBounds);
+    window.visualViewport?.addEventListener('resize', updateBounds);
 
     return () => {
-      window.removeEventListener('resize', updateComposerBounds);
-      window.removeEventListener('orientationchange', updateComposerBounds);
-      window.visualViewport?.removeEventListener('resize', updateComposerBounds);
+      window.removeEventListener('resize', updateBounds);
+      window.removeEventListener('orientationchange', updateBounds);
+      window.visualViewport?.removeEventListener('resize', updateBounds);
     };
   }, [mobileLayoutHeight]);
 
@@ -1044,16 +1058,136 @@ export default function ChatPage() {
           </div>
         </div>
 
-        {/* ─── SLIDE-IN HISTORY PANEL ─── */}
+        </div>
+        {/* ↑ Closes the card (bg-card/90 ... backdrop-blur-2xl ... overflow-hidden)
+            container. The history panel and composer are intentionally rendered
+            BELOW this point, as siblings of the card rather than children of it.
+
+            Why: backdrop-blur-2xl (like filter/transform) makes an element a
+            "containing block" for any position:fixed descendants in most
+            browsers. That silently clipped the history panel and its dimming
+            backdrop to the card's own box, so they cut off above the composer
+            instead of reaching down to cover it — even though their z-index
+            was already higher. Moving them outside the card fixes the clipping;
+            the z-index ordering below then makes sure the composer renders
+            underneath, not just next to, the open panel. */}
+
+        {/* ─────────────────────────────────────────────────────────
+            KEYBOARD-AWARE CHAT COMPOSER
+            Desktop: anchored to the bottom of the chat card.
+            Mobile/tablet: fixed to the visual viewport and follows
+            the on-screen keyboard using keyboardHeight.
+
+            z-30 here is intentionally the LOWEST of the three overlay
+            layers on this page (composer 30 < history backdrop 40 <
+            history panel 50), so when the history panel is open it (and
+            its dimming backdrop) always render on top of — and fully
+            cover — the composer instead of the input poking out below it.
+            ───────────────────────────────────────────────────────── */}
+        <div
+          className="z-30 fixed left-3 right-3 lg:absolute lg:left-0 lg:right-0    lg:bottom-0 translate-y-0"
+          style={{
+            overflowAnchor: 'none',
+            ...(window.innerWidth < 1024 && composerBounds
+              ? {
+                  left: `${composerBounds.left}px`,
+                  right: 'auto',
+                  width: `${composerBounds.width}px`,
+                }
+              : {}),
+            bottom:
+              window.innerWidth < 1024
+                ? `max(${keyboardHeight + composerRestGap}px, calc(env(keyboard-inset-height, 0px) + ${composerRestGap}px))`
+                : undefined,
+            transition:
+              window.innerWidth < 1024
+                ? keyboardHeight > 0
+                  ? 'bottom 80ms ease-out'
+                  : 'bottom 150ms ease-out'
+                : undefined,
+          }}
+        >
+          {/* Safe-area padding lives on the visible pill (not the invisible
+              fixed wrapper above) so the pill's own background extends all
+              the way down to the wrapper's edge — flush with the card,
+              instead of leaving a gap that exposes the card underneath. */}
+          <div
+            className="border-t border-border/70 bg-muted/20 backdrop-blur-xl shadow-2xl lg:rounded-none rounded-3xl"
+            style={{
+              paddingBottom:
+                window.innerWidth < 1024
+                  ? 'env(safe-area-inset-bottom, 0px)'
+                  : undefined,
+            }}
+          >
+            <div className="p-0 md:p-0 lg:p-4 relative">
+              <div className="max-w-6xl mx-auto relative">
+                <div className="relative rounded-2xl border border-border/80 bg-card/95 lg:bg-card/60 shadow-lg px-4 md:px-4 lg:px-5 py-2 md:py-2 lg:py-3 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20 transition-all flex items-center gap-2 md:gap-3">
+                  <Textarea
+                    ref={textareaRef}
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    onPointerDown={handleInputPointerDown}
+                    onFocus={() => setInputFocused(true)}
+                    onBlur={() => setInputFocused(false)}
+                    placeholder={
+                      rateLimitInfo?.isLimitReached
+                        ? 'Daily message limit reached. Try again after reset time.'
+                        : !selectedKb
+                        ? 'Please select a KB to chat'
+                        : `Ask about ${kbs?.find((k) => k.id === selectedKb)?.display_name}...`
+                    }
+                    disabled={rateLimitInfo?.isLimitReached || !selectedKb}
+                    className="flex-1 border-0 bg-transparent shadow-none focus-visible:ring-0 resize-none py-3 pl-2 md:pl-3 lg:pl-4 text-lg md:text-sm lg:text-base font-medium placeholder:text-muted-foreground text-foreground disabled:opacity-50 disabled:cursor-not-allowed min-h-[40px] max-h-[150px] overflow-y-auto break-words whitespace-normal"
+                    rows={1}
+                    spellCheck="true"
+                  />
+
+                  <Button
+                    onClick={() => handleSend()}
+                    disabled={!input.trim() || chatMutation.isPending || rateLimitInfo?.isLimitReached || !selectedKb}
+                    size="icon"
+                    className="gap-2 shadow-lg shadow-primary/25 h-8 md:h-8 lg:h-8 w-8 md:w-8 lg:w-8 font-bold rounded-full flex-shrink-0 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {chatMutation.isPending ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Send className="h-5 w-5" />
+                    )}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* ─── SLIDE-IN HISTORY PANEL ───
+            Rendered as a sibling of the composer (not nested inside the
+            blurred card above) so it is never clipped, and — with z-50 for
+            the panel and z-40 for its backdrop, both above the composer's
+            z-30 — it correctly slides in ON TOP OF the composer, fully
+            covering the input while it's open. Its top/height are pinned
+            to cardBounds (the chat card's own measured rect) rather than
+            the viewport, so it matches the card's actual size instead of
+            spanning the full screen and overlapping the navbar/composer. */}
         {historyExpanded && (
           <>
             {/* Backdrop - tap to close */}
             <div
-              className="absolute inset-0 bg-black/20 z-20 md:hidden"
+              className="fixed inset-0 bg-black/20 z-40 md:hidden"
               onClick={() => setHistoryExpanded(false)}
             />
-            
-            <div className="absolute inset-y-0 left-0 w-80 border-r border-border/40 bg-card/95 backdrop-blur-sm z-30 animate-in slide-in-from-left-full duration-300 rounded-l-3xl" data-chat-history>
+
+            <div
+              className="fixed left-0 w-80 border-r border-border/40 bg-card/95 backdrop-blur-sm z-50 animate-in slide-in-from-left-full duration-300 rounded-l-3xl overflow-hidden"
+              style={
+                cardBounds
+                  ? { top: `${cardBounds.top}px`, height: `${cardBounds.height}px` }
+                  : { top: 0, bottom: 0 }
+              }
+              data-chat-history
+            >
               <div className="h-full overflow-y-auto">
                 <div className="p-6">
                   <div className="max-w-4xl mx-auto">
@@ -1143,92 +1277,6 @@ export default function ChatPage() {
             </div>
           </>
         )}
-
-        </div>
-
-        {/* ─────────────────────────────────────────────────────────
-            KEYBOARD-AWARE CHAT COMPOSER
-            Desktop: anchored to the bottom of the chat card.
-            Mobile/tablet: fixed to the visual viewport and follows
-            the on-screen keyboard using keyboardHeight.
-            ───────────────────────────────────────────────────────── */}
-        <div
-          className="z-40 fixed left-3 right-3 lg:absolute lg:left-0 lg:right-0    lg:bottom-0 translate-y-0"
-          style={{
-            overflowAnchor: 'none',
-            ...(window.innerWidth < 1024 && composerBounds
-              ? {
-                  left: `${composerBounds.left}px`,
-                  right: 'auto',
-                  width: `${composerBounds.width}px`,
-                }
-              : {}),
-            bottom:
-              window.innerWidth < 1024
-                ? `max(${keyboardHeight + composerRestGap}px, calc(env(keyboard-inset-height, 0px) + ${composerRestGap}px))`
-                : undefined,
-            transition:
-              window.innerWidth < 1024
-                ? keyboardHeight > 0
-                  ? 'bottom 80ms ease-out'
-                  : 'bottom 150ms ease-out'
-                : undefined,
-          }}
-        >
-          {/* Safe-area padding lives on the visible pill (not the invisible
-              fixed wrapper above) so the pill's own background extends all
-              the way down to the wrapper's edge — flush with the card,
-              instead of leaving a gap that exposes the card underneath. */}
-          <div
-            className="border-t border-border/70 bg-muted/20 backdrop-blur-xl shadow-2xl lg:rounded-none rounded-3xl"
-            style={{
-              paddingBottom:
-                window.innerWidth < 1024
-                  ? 'env(safe-area-inset-bottom, 0px)'
-                  : undefined,
-            }}
-          >
-            <div className="p-0 md:p-0 lg:p-4 relative">
-              <div className="max-w-6xl mx-auto relative">
-                <div className="relative rounded-2xl border border-border/80 bg-card/95 lg:bg-card/60 shadow-lg px-4 md:px-4 lg:px-5 py-2 md:py-2 lg:py-3 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20 transition-all flex items-center gap-2 md:gap-3">
-                  <Textarea
-                    ref={textareaRef}
-                    value={input}
-                    onChange={(e) => setInput(e.target.value)}
-                    onKeyDown={handleKeyDown}
-                    onPointerDown={handleInputPointerDown}
-                    onFocus={() => setInputFocused(true)}
-                    onBlur={() => setInputFocused(false)}
-                    placeholder={
-                      rateLimitInfo?.isLimitReached
-                        ? 'Daily message limit reached. Try again after reset time.'
-                        : !selectedKb
-                        ? 'Please select a KB to chat'
-                        : `Ask about ${kbs?.find((k) => k.id === selectedKb)?.display_name}...`
-                    }
-                    disabled={rateLimitInfo?.isLimitReached || !selectedKb}
-                    className="flex-1 border-0 bg-transparent shadow-none focus-visible:ring-0 resize-none py-3 pl-2 md:pl-3 lg:pl-4 text-lg md:text-sm lg:text-base font-medium placeholder:text-muted-foreground text-foreground disabled:opacity-50 disabled:cursor-not-allowed min-h-[40px] max-h-[150px] overflow-y-auto break-words whitespace-normal"
-                    rows={1}
-                    spellCheck="true"
-                  />
-
-                  <Button
-                    onClick={() => handleSend()}
-                    disabled={!input.trim() || chatMutation.isPending || rateLimitInfo?.isLimitReached || !selectedKb}
-                    size="icon"
-                    className="gap-2 shadow-lg shadow-primary/25 h-8 md:h-8 lg:h-8 w-8 md:w-8 lg:w-8 font-bold rounded-full flex-shrink-0 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {chatMutation.isPending ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <Send className="h-5 w-5" />
-                    )}
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
       </div>
     </div>
   );

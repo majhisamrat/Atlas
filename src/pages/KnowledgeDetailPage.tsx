@@ -125,6 +125,15 @@ export default function KnowledgeDetailPage() {
     setDeleteUploadId(null);
   };
 
+  const formatProcessingStatus = (status: string) => {
+    const statusMap: Record<string, string> = {
+      'pending': 'Processing',
+      'completed': 'Completed',
+      'failed': 'Failed',
+    };
+    return statusMap[status] || status;
+  };
+
   const stats = [
     { label: 'Total Uploads', value: history?.total ?? 0, icon: FileText, color: 'text-blue-400' },
     { label: 'Total Queries', value: kb.query_count, icon: BarChart3, color: 'text-purple-400' },
@@ -249,7 +258,7 @@ export default function KnowledgeDetailPage() {
                             : 'warning'
                         }
                       >
-                        {u.processing_status}
+                        {formatProcessingStatus(u.processing_status)}
                       </Badge>
 
                       {u.processing_duration_ms > 0 && (

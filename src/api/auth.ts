@@ -26,4 +26,7 @@ export const authApi = {
     apiClient.post<TokenResponse>('/auth/google-login', data).then((r) => r.data),
 
   getMe: () => apiClient.get<UserProfile>('/auth/me').then((r) => r.data),
+
+  deleteAccount: () =>
+    apiClient.post<{ success: boolean; message: string }>('/auth/delete-account', {}).then((r) => r.data),
 };

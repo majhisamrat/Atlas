@@ -10,6 +10,7 @@ import KnowledgeBasesPage from '@/pages/KnowledgeBasesPage';
 import KnowledgeDetailPage from '@/pages/KnowledgeDetailPage';
 import ChatPage from '@/pages/ChatPage';
 import AnalyticsPage from '@/pages/AnalyticsPage';
+import SettingsPage from '@/pages/SettingsPage';
 import NotFoundPage from '@/pages/NotFoundPage';
 
 export const router = createBrowserRouter([
@@ -43,6 +44,7 @@ export const router = createBrowserRouter([
       { path: 'knowledge/:id', element: <KnowledgeDetailPage /> },
       { path: 'chat', element: <ChatPage /> },
       { path: 'analytics', element: <AnalyticsPage /> },
+      { path: 'settings', element: <SettingsPage /> },
     ],
   },
   {

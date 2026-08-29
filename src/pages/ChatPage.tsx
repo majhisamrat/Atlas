@@ -980,15 +980,26 @@ export default function ChatPage() {
                         <div className="p-3 md:p-4 rounded-xl bg-muted/40 border border-border/60 space-y-2 text-xs">
                           <p className="text-muted-foreground font-bold flex items-center gap-2 text-xs uppercase tracking-wider">
                             <BookOpen className="h-3 md:h-4 w-3 md:w-4 text-primary shrink-0" />
-                            Sources ({msg.sources.length})
+                            Sources
                           </p>
-                          <div className="flex flex-wrap gap-2">
-                            {msg.sources.slice(0, 6).map((src, i) => (
-                              <Badge key={i} variant="outline" className="text-xs font-semibold py-1 px-2 md:px-3 gap-1 bg-card/80 border-border">
-                                <span className="font-mono text-primary text-xs">{src.citation_key}</span>
-                                <span>-</span>
-                                <span className="truncate max-w-[150px] md:max-w-[200px]">{src.document_name || src.title}</span>
-                              </Badge>
+                          <div className="space-y-1">
+                            {/* Show unique KB names with label */}
+                            {Array.from(
+                              new Set(
+                                msg.sources.map((src) => {
+                                  // Use kb_name from source if available, otherwise get from selected KB
+                                  if (src.kb_name) return src.kb_name;
+                                  // Fallback to selected KB display name
+                                  const selectedKbData = kbs?.find((kb) => kb.id === selectedKb);
+                                  return selectedKbData?.display_name || 'Knowledge Base';
+                                })
+                              )
+                            ).map((kbName) => (
+                              <p key={kbName} className="text-xs text-muted-foreground font-medium">
+                                <span className="font-semibold">Knowledge Base</span>
+                                <span className="font-semibold"> -- </span>
+                                <span className="font-semibold text-foreground">{kbName}</span>
+                              </p>
                             ))}
                           </div>
                         </div>

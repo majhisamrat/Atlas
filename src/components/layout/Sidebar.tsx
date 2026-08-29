@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { NavLink, useLocation } from 'react-router-dom';
+import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import {
   LayoutDashboard,
@@ -13,9 +13,11 @@ import {
   Sparkles,
   Sun,
   Moon,
+  Monitor,
   Menu,
   X,
   Download,
+  Settings,
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useTheme } from '@/context/ThemeContext';
@@ -41,6 +43,7 @@ export function Sidebar({ collapsed, onToggle, isDrawerOpen, onDrawerClose }: {
   const { theme, toggleTheme } = useTheme();
   const { isInstalled, promptInstall } = usePWA();
   const location = useLocation();
+  const navigate = useNavigate();
   const [internalCollapsed, setInternalCollapsed] = useState(false);
 
   // On mobile drawer, never collapse. On desktop, use the collapsed prop.
@@ -177,48 +180,14 @@ export function Sidebar({ collapsed, onToggle, isDrawerOpen, onDrawerClose }: {
           )
         )}
 
-        {/* Theme Toggle Button */}
-        {isCollapsed ? (
-          <Tooltip delayDuration={0}>
-            <TooltipTrigger asChild>
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() => {
-                  toggleTheme();
-                  if (isDrawerOpen) onDrawerClose?.();
-                }}
-                className="w-full h-10 rounded-xl"
-              >
-                {theme === 'dark' ? <Sun className="h-4 w-4 text-amber-400" /> : <Moon className="h-4 w-4 text-slate-700" />}
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="right">
-              Switch to {theme === 'dark' ? 'Light' : 'Dark'} Mode
-            </TooltipContent>
-          </Tooltip>
-        ) : (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              toggleTheme();
-              if (isDrawerOpen) onDrawerClose?.();
-            }}
-            className="w-full justify-between rounded-xl h-10 text-sm font-bold px-3.5 border-border bg-card/80 hover:bg-muted shadow-sm"
-          >
-            <span className="flex items-center gap-2.5">
-              {theme === 'dark' ? <Moon className="h-4 w-4 text-indigo-400" /> : <Sun className="h-4 w-4 text-amber-500" />}
-              <span>{theme === 'dark' ? 'Dark Mode' : 'Light Mode'}</span>
-            </span>
-            <span className="text-xs text-muted-foreground uppercase font-black">{theme}</span>
-          </Button>
-        )}
-
-        {/* User Card */}
-        <div
+        {/* User Card - Clickable to Settings */}
+        <button
+          onClick={() => {
+            navigate('/settings');
+            if (isDrawerOpen) onDrawerClose?.();
+          }}
           className={cn(
-            'flex items-center gap-3 rounded-xl p-2.5 bg-muted/50 border border-border/80 shadow-sm',
+            'w-full flex items-center gap-3 rounded-xl p-2.5 bg-muted/50 border border-border/80 shadow-sm transition-all hover:bg-muted hover:border-primary/50 hover:shadow-md',
             isCollapsed && 'justify-center p-1.5',
           )}
         >
@@ -234,34 +203,11 @@ export function Sidebar({ collapsed, onToggle, isDrawerOpen, onDrawerClose }: {
               <span className="text-xs text-muted-foreground font-medium">Authenticated</span>
             </div>
           )}
-        </div>
 
-        {/* Sign Out Button */}
-        {isCollapsed ? (
-          <Tooltip delayDuration={0}>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={logout}
-                className="w-full h-10 rounded-xl text-muted-foreground hover:text-red-500 hover:bg-red-500/10"
-              >
-                <LogOut className="h-4 w-4" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="right">Sign Out</TooltipContent>
-          </Tooltip>
-        ) : (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={logout}
-            className="w-full justify-start gap-2.5 rounded-xl text-sm font-bold text-muted-foreground hover:text-red-500 hover:bg-red-500/10 transition-colors h-10"
-          >
-            <LogOut className="h-4 w-4" />
-            Sign Out
-          </Button>
-        )}
+          {!isCollapsed && (
+            <Settings className="h-4 w-4 text-muted-foreground shrink-0" />
+          )}
+        </button>
       </div>
     </aside>
   );

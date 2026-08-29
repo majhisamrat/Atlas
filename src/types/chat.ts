@@ -8,6 +8,7 @@ export interface ChatSource {
   page_number: number;
   text_snippet: string;
   relevance_score: number;
+  kb_name?: string;
 }
 
 export interface ChatMetadata {

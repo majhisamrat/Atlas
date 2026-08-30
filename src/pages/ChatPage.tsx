@@ -363,15 +363,20 @@ export default function ChatPage() {
     bottom: number;
   } | null>(null);
 
-  // Mirrors the chat card's own on-screen top/height. The slide-in history
-  // panel has to live outside the blurred card (see the note near its JSX
-  // below) to avoid being clipped, but that means it no longer inherits the
-  // card's box automatically — without this it stretches edge-to-edge over
-  // the whole viewport, riding up over the top navbar and hanging down past
-  // the composer. Measuring the card's real rect and applying it as the
-  // panel's top/height keeps it sized to "the actual card", not the screen.
+  // Mirrors the chat card's own on-screen left/top/height. The slide-in
+  // history panel has to live outside the blurred card (see the note near
+  // its JSX below) to avoid being clipped, but that means it no longer
+  // inherits the card's box automatically — without this it stretches
+  // edge-to-edge over the whole viewport: riding up over the top navbar,
+  // hanging down past the composer, AND (since the card itself sits with a
+  // small inset from the true screen edge, same as the composer accounts
+  // for via composerBounds.left) sliding in from the raw screen edge
+  // instead of the card's actual left edge. Measuring the card's real rect
+  // and applying it to the panel keeps it sized and positioned to "the
+  // actual card", not the screen.
   const [cardBounds, setCardBounds] = useState<{
     top: number;
+    left: number;
     height: number;
   } | null>(null);
 
@@ -380,7 +385,7 @@ export default function ChatPage() {
       const rect = chatContainerRef.current?.getBoundingClientRect();
       if (!rect) return;
 
-      setCardBounds({ top: rect.top, height: rect.height });
+      setCardBounds({ top: rect.top, left: rect.left, height: rect.height });
 
       if (window.innerWidth < 1024) {
         setComposerBounds({
@@ -1167,10 +1172,11 @@ export default function ChatPage() {
             blurred card above) so it is never clipped, and — with z-50 for
             the panel and z-40 for its backdrop, both above the composer's
             z-30 — it correctly slides in ON TOP OF the composer, fully
-            covering the input while it's open. Its top/height are pinned
-            to cardBounds (the chat card's own measured rect) rather than
-            the viewport, so it matches the card's actual size instead of
-            spanning the full screen and overlapping the navbar/composer. */}
+            covering the input while it's open. Its left/top/height are
+            pinned to cardBounds (the chat card's own measured rect) rather
+            than the viewport, so it matches the card's actual position and
+            size — sliding in from the card's edge, not the screen's edge —
+            instead of spanning the full screen. */}
         {historyExpanded && (
           <>
             {/* Backdrop - tap to close */}
@@ -1180,11 +1186,15 @@ export default function ChatPage() {
             />
 
             <div
-              className="fixed left-0 w-80 border-r border-border/40 bg-card/95 backdrop-blur-sm z-50 animate-in slide-in-from-left-full duration-300 rounded-l-3xl overflow-hidden"
+              className="fixed w-80 border-r border-border/40 bg-card/95 backdrop-blur-sm z-50 animate-in slide-in-from-left-full duration-300 rounded-l-3xl overflow-hidden"
               style={
                 cardBounds
-                  ? { top: `${cardBounds.top}px`, height: `${cardBounds.height}px` }
-                  : { top: 0, bottom: 0 }
+                  ? {
+                      top: `${cardBounds.top}px`,
+                      left: `${cardBounds.left}px`,
+                      height: `${cardBounds.height}px`,
+                    }
+                  : { top: 0, left: 0, bottom: 0 }
               }
               data-chat-history
             >

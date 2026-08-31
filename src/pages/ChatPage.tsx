@@ -42,6 +42,10 @@ export default function ChatPage() {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const chatPageRef = useRef<HTMLDivElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
+  // Ref on the actual visible card box (the bg-card/90 rounded rectangle) —
+  // used to measure its real edges directly for the history panel below,
+  // rather than assuming a same-size ancestor lines up with it.
+  const cardRef = useRef<HTMLDivElement>(null);
 
   const navigate = useNavigate();
   const touchStartX = useRef(0);
@@ -363,55 +367,126 @@ export default function ChatPage() {
     bottom: number;
   } | null>(null);
 
-  // Mirrors the chat card's own on-screen left/top/height. The slide-in
-  // history panel has to live outside the blurred card (see the note near
-  // its JSX below) to avoid being clipped, but that means it no longer
-  // inherits the card's box automatically — without this it stretches
-  // edge-to-edge over the whole viewport: riding up over the top navbar,
-  // hanging down past the composer, AND (since the card itself sits with a
-  // small inset from the true screen edge, same as the composer accounts
-  // for via composerBounds.left) sliding in from the raw screen edge
-  // instead of the card's actual left edge. Measuring the card's real rect
-  // and applying it to the panel keeps it sized and positioned to "the
-  // actual card", not the screen.
-  const [cardBounds, setCardBounds] = useState<{
-    top: number;
+  // ─────────────────────────────────────────────────────────────
+  // HISTORY PANEL — MATCH THE CARD EXACTLY
+  // Measures the actual visible card box (cardRef) directly, on every
+  // breakpoint. Earlier attempts assumed the card's box was identical to
+  // one of its ancestors — reasonable on paper, but it kept coming out
+  // misaligned on mobile, tablet, AND desktop.
+  //
+  // Root cause (confirmed by reproducing this outside the app): a plain
+  // "measure once on mount, then only re-measure on window resize" misses
+  // any layout shift that ISN'T a window resize — e.g. a sidebar/nav that
+  // finishes expanding, auth/user data resolving, fonts loading, or
+  // anything else in the surrounding app shell that moves this card
+  // AFTER our first snapshot. `resize`/`orientationchange` never fire for
+  // that, so the copied position goes stale and the panel is left behind
+  // wherever the card USED to be — exactly the "panel stops short of the
+  // card" gap seen in the screenshots.
+  //
+  // Fix: a ResizeObserver directly on the card. It fires whenever the
+  // card's own box changes size for ANY reason (including a sidebar
+  // pushing/releasing it), so cardRect self-corrects instead of relying
+  // on us guessing every possible cause of a layout shift.
+  // ─────────────────────────────────────────────────────────────
+  const [cardRect, setCardRect] = useState<{
     left: number;
+    top: number;
+    width: number;
     height: number;
   } | null>(null);
 
   useEffect(() => {
-    const updateBounds = () => {
-      const rect = chatContainerRef.current?.getBoundingClientRect();
-      if (!rect) return;
+    if (window.innerWidth >= 1024) return;
 
-      setCardBounds({ top: rect.top, left: rect.left, height: rect.height });
+    const cardEl = cardRef.current;
+    if (!cardEl) return;
 
-      if (window.innerWidth < 1024) {
+    const measureCard = () => {
+      const rect = cardEl.getBoundingClientRect();
+      setCardRect({
+        left: rect.left,
+        top: rect.top,
+        width: rect.width,
+        height: rect.height,
+      });
+    };
+
+    measureCard();
+
+    // Catches size changes from ANY cause: the app's own sidebar/nav
+    // finishing an animation, responsive breakpoint changes, content
+    // reflow, etc. — not just window resize.
+    const resizeObserver = new ResizeObserver(measureCard);
+    resizeObserver.observe(cardEl);
+
+    // Belt-and-suspenders for the rarer case of a pure position shift
+    // with no size change (e.g. a translateX animation on an ancestor):
+    // a few staggered re-checks shortly after mount, the same pattern
+    // already used elsewhere in this file for Android's delayed layout
+    // reporting.
+    const settleTimers = [0, 100, 300, 600, 1000].map((delay) =>
+      window.setTimeout(measureCard, delay)
+    );
+
+    window.addEventListener('resize', measureCard);
+    window.addEventListener('orientationchange', measureCard);
+    window.visualViewport?.addEventListener('resize', measureCard);
+
+    return () => {
+      resizeObserver.disconnect();
+      settleTimers.forEach(window.clearTimeout);
+      window.removeEventListener('resize', measureCard);
+      window.removeEventListener('orientationchange', measureCard);
+      window.visualViewport?.removeEventListener('resize', measureCard);
+    };
+  }, [mobileLayoutHeight, historyExpanded]);
+
+  useEffect(() => {
+    if (window.innerWidth >= 1024) return;
+
+    const updateComposerBounds = () => {
+      const containerRect = chatContainerRef.current?.getBoundingClientRect();
+      if (containerRect) {
         setComposerBounds({
-          left: rect.left,
-          width: rect.width,
+          left: containerRect.left,
+          width: containerRect.width,
           // How far the card's own bottom edge already sits above the
           // true screen edge (whatever ambient padding the page adds).
           // Resting the composer here keeps it flush with the card
           // instead of floating above it and exposing the card's corner.
-          bottom: Math.max(0, window.innerHeight - rect.bottom),
+          bottom: Math.max(0, window.innerHeight - containerRect.bottom),
         });
       }
     };
 
-    updateBounds();
+    updateComposerBounds();
 
-    window.addEventListener('resize', updateBounds);
-    window.addEventListener('orientationchange', updateBounds);
-    window.visualViewport?.addEventListener('resize', updateBounds);
+    window.addEventListener('resize', updateComposerBounds);
+    window.addEventListener('orientationchange', updateComposerBounds);
+    window.visualViewport?.addEventListener('resize', updateComposerBounds);
 
     return () => {
-      window.removeEventListener('resize', updateBounds);
-      window.removeEventListener('orientationchange', updateBounds);
-      window.visualViewport?.removeEventListener('resize', updateBounds);
+      window.removeEventListener('resize', updateComposerBounds);
+      window.removeEventListener('orientationchange', updateComposerBounds);
+      window.visualViewport?.removeEventListener('resize', updateComposerBounds);
     };
   }, [mobileLayoutHeight]);
+
+  // Re-measure the card the instant the history panel opens too, in case
+  // opening it shifts the layout (e.g. a scrollbar appearing/disappearing).
+  useEffect(() => {
+    if (!historyExpanded) return;
+    const cardEl = cardRef.current;
+    if (!cardEl) return;
+    const rect = cardEl.getBoundingClientRect();
+    setCardRect({
+      left: rect.left,
+      top: rect.top,
+      width: rect.width,
+      height: rect.height,
+    });
+  }, [historyExpanded]);
 
   const handleInputPointerDown = (
     event: React.PointerEvent<HTMLTextAreaElement>
@@ -441,6 +516,32 @@ export default function ChatPage() {
       textarea.focus({ preventScroll: true });
     });
   };
+
+  // Measure card position when history expands
+  useEffect(() => {
+    if (!historyExpanded) return;
+
+    const cardEl = cardRef.current;
+    if (!cardEl) return;
+
+    const measureCard = () => {
+      const rect = cardEl.getBoundingClientRect();
+      setCardRect({
+        left: rect.left,
+        top: rect.top,
+        width: rect.width,
+        height: rect.height,
+      });
+    };
+
+    // Measure immediately
+    measureCard();
+
+    // Re-measure after animation completes
+    const timer = setTimeout(measureCard, 350);
+
+    return () => clearTimeout(timer);
+  }, [historyExpanded]);
 
   // Close history when clicking outside on mobile
   useEffect(() => {
@@ -770,6 +871,7 @@ export default function ChatPage() {
       {/* ─── RESPONSIVE CHAT CONTAINER ─── */}
       <div ref={chatContainerRef} className="relative w-full md:max-w-6xl h-full md:h-[90vh] flex flex-col">
         <div
+          ref={cardRef}
           className={cn(
             "w-full h-full md:h-[90vh] md:max-h-[clamp(93.75rem,93.75rem,117.1875rem)] md:min-h-[clamp(62.5rem,62.5rem,78.125rem)] flex flex-col bg-card/90 backdrop-blur-2xl md:border md:border-border/80 md:rounded-3xl md:shadow-2xl md:overflow-hidden md:glow-sm z-10 rounded-2xl md:rounded-3xl overflow-hidden"
           )}
@@ -1168,15 +1270,23 @@ export default function ChatPage() {
         </div>
 
         {/* ─── SLIDE-IN HISTORY PANEL ───
-            Rendered as a sibling of the composer (not nested inside the
-            blurred card above) so it is never clipped, and — with z-50 for
-            the panel and z-40 for its backdrop, both above the composer's
-            z-30 — it correctly slides in ON TOP OF the composer, fully
-            covering the input while it's open. Its left/top/height are
-            pinned to cardBounds (the chat card's own measured rect) rather
-            than the viewport, so it matches the card's actual position and
-            size — sliding in from the card's edge, not the screen's edge —
-            instead of spanning the full screen. */}
+            A sibling of the composer, but crucially NOT of the blurred
+            card above: that card's backdrop-blur-2xl makes it a
+            "containing block" for position:fixed descendants in most
+            browsers, which is what silently clipped this panel short of
+            the composer before — so it still has to live outside the card
+            in the DOM to correctly render on top of (and cover) the
+            composer via z-index.
+
+            For its position, this uses position:fixed with inline
+            left/top/height pulled straight from cardRect — a direct
+            getBoundingClientRect() measurement of the card itself (see
+            cardRef above), taken fresh on mount, on resize, and the
+            instant the panel opens. That's deliberately NOT relying on
+            "this ancestor is the same size as the card" (that assumption
+            didn't hold up across breakpoints) — it's the card's real
+            pixels, so the panel is guaranteed to start flush with the
+            card's actual edges instead of the screen's. */}
         {historyExpanded && (
           <>
             {/* Backdrop - tap to close */}
@@ -1186,16 +1296,15 @@ export default function ChatPage() {
             />
 
             <div
-              className="fixed w-80 border-r border-border/40 bg-card/95 backdrop-blur-sm z-50 animate-in slide-in-from-left-full duration-300 rounded-l-3xl overflow-hidden"
-              style={
-                cardBounds
-                  ? {
-                      top: `${cardBounds.top}px`,
-                      left: `${cardBounds.left}px`,
-                      height: `${cardBounds.height}px`,
-                    }
-                  : { top: 0, left: 0, bottom: 0 }
-              }
+              className="fixed top-0 w-80 border-r border-border/40 bg-card/95 backdrop-blur-sm z-50 overflow-hidden rounded-l-3xl"
+              style={{
+                left: cardRect ? `${cardRect.left}px` : '0px',
+                height: cardRect ? `${cardRect.height}px` : '100vh',
+                top: cardRect ? `${cardRect.top}px` : '0px',
+                width: cardRect ? `${Math.min(320, cardRect.width)}px` : '320px',
+                transform: historyExpanded ? 'translateX(0)' : 'translateX(-100%)',
+                transition: 'transform 300ms ease-out',
+              }}
               data-chat-history
             >
               <div className="h-full overflow-y-auto">

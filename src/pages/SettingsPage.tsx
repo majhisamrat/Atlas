@@ -158,7 +158,7 @@ export default function SettingsPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="w-full h-auto bg-gradient-to-br from-background via-background to-primary/5">
       {/* Header */}
       <div className="sticky top-0 z-40 border-b border-border/70 bg-card/90 backdrop-blur-2xl">
         <div className="flex items-center justify-between px-6 py-4 max-w-4xl mx-auto">
@@ -181,56 +181,58 @@ export default function SettingsPage() {
         </div>
       </div>
 
-      {/* Settings Content */}
-      <div className="p-6 max-w-4xl mx-auto space-y-8">
-        {/* Email Section */}
-        <FadeIn>
-          <Card className="p-6 border border-border/80 bg-card/50 backdrop-blur-sm">
-            <div className="flex items-center justify-between">
-              <div className="flex-1">
-                <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-2">
-                  Email Address
-                </h2>
-                <p className="text-xl font-bold text-foreground break-all">{user?.email}</p>
+      {/* Settings Content - Auto Height with Theme */}
+      <div className="p-6 max-w-4xl mx-auto">
+        <div className="space-y-6">
+          {/* Email Section */}
+          <FadeIn>
+            <Card className="p-6 border border-border/80 bg-card/50 backdrop-blur-sm">
+              <div className="flex items-center justify-between">
+                <div className="flex-1">
+                  <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-2">
+                    Email Address
+                  </h2>
+                  <p className="text-xl font-bold text-foreground break-all">{user?.email}</p>
+                </div>
+                <Badge variant="secondary" className="font-semibold">
+                  Active
+                </Badge>
               </div>
-              <Badge variant="secondary" className="font-semibold">
-                Active
-              </Badge>
+            </Card>
+          </FadeIn>
+
+          {/* Color Mode Section */}
+          <FadeIn delay={0.1}>
+            <ColorModeSection theme={theme} setTheme={setTheme} themeOptions={themeOptions} />
+          </FadeIn>
+
+          {/* Logout Section */}
+          <FadeIn delay={0.2}>
+            <div className="pt-6 border-t border-border/50 space-y-4">
+              <Button
+                onClick={handleLogout}
+                variant="destructive"
+                className="w-full gap-2.5 h-12 rounded-xl font-semibold text-base shadow-md shadow-red-500/20"
+              >
+                <LogOut className="h-5 w-5" />
+                Sign Out
+              </Button>
+              <p className="text-xs text-muted-foreground text-center">
+                You will be signed out and redirected to the login page
+              </p>
+
+              {/* Delete Account Button */}
+              <Button
+                onClick={() => setDeleteDialogOpen(true)}
+                variant="outline"
+                className="w-full gap-2.5 h-12 rounded-xl font-semibold text-base text-red-600 border-red-600/30 hover:bg-red-600/10 hover:text-red-700"
+              >
+                <Trash2 className="h-5 w-5" />
+                Delete Account
+              </Button>
             </div>
-          </Card>
-        </FadeIn>
-
-        {/* Color Mode Section */}
-        <FadeIn delay={0.1}>
-          <ColorModeSection theme={theme} setTheme={setTheme} themeOptions={themeOptions} />
-        </FadeIn>
-
-        {/* Logout Section */}
-        <FadeIn delay={0.2}>
-          <div className="pt-6 border-t border-border/50 space-y-4">
-            <Button
-              onClick={handleLogout}
-              variant="destructive"
-              className="w-full gap-2.5 h-12 rounded-xl font-semibold text-base shadow-md shadow-red-500/20"
-            >
-              <LogOut className="h-5 w-5" />
-              Sign Out
-            </Button>
-            <p className="text-xs text-muted-foreground text-center">
-              You will be signed out and redirected to the login page
-            </p>
-
-            {/* Delete Account Button */}
-            <Button
-              onClick={() => setDeleteDialogOpen(true)}
-              variant="outline"
-              className="w-full gap-2.5 h-12 rounded-xl font-semibold text-base text-red-600 border-red-600/30 hover:bg-red-600/10 hover:text-red-700"
-            >
-              <Trash2 className="h-5 w-5" />
-              Delete Account
-            </Button>
-          </div>
-        </FadeIn>
+          </FadeIn>
+        </div>
       </div>
 
       {/* Delete Account Confirmation Dialog */}

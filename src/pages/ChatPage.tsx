@@ -1023,7 +1023,7 @@ export default function ChatPage() {
           style={{
             paddingBottom:
               window.innerWidth < 1024
-                ? `${Math.max(140, keyboardHeight + 140)}px`
+                ? `${Math.max(180, keyboardHeight + 180)}px`
                 : undefined,
           }}
         >
@@ -1162,7 +1162,7 @@ export default function ChatPage() {
               </FadeIn>
             )}
 
-            <div ref={messagesEndRef} />
+            <div ref={messagesEndRef} className={window.innerWidth < 1024 ? 'h-32' : ''} />
           </div>
         </div>
 

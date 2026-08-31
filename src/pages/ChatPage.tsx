@@ -768,6 +768,7 @@ export default function ChatPage() {
     setSessionId(null);
     setCurrentSessionTitle('');
     setSelectedKb('all');
+    setHistoryExpanded(false);
   };
 
   const handleSend = async (customQuery?: string) => {
@@ -1364,7 +1365,7 @@ export default function ChatPage() {
                               <div className="font-semibold text-lg text-foreground truncate mb-3">
                                 {session.title || 'Untitled Chat'}
                               </div>
-                              <div className="space-y-2 text-base text-muted-foreground">
+                              <div className="space-y-2 text-sm text-muted-foreground">
                                 <div className="flex items-center gap-2">
                                   <BookOpen className="h-3 w-3 flex-shrink-0" />
                                   <span className="truncate">{session.knowledge_base_name}</span>

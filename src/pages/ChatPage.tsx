@@ -1296,12 +1296,14 @@ export default function ChatPage() {
             />
 
             <div
-              className="fixed top-0 w-80 border-r border-border/40 bg-card/95 backdrop-blur-sm z-50 overflow-hidden rounded-l-3xl"
+              className="fixed top-0 border-r border-border/40 bg-card/95 backdrop-blur-sm z-50 overflow-hidden rounded-l-3xl"
               style={{
                 left: cardRect ? `${cardRect.left}px` : '0px',
                 height: cardRect ? `${cardRect.height}px` : '100vh',
                 top: cardRect ? `${cardRect.top}px` : '0px',
-                width: cardRect ? `${Math.min(320, cardRect.width)}px` : '320px',
+                width: window.innerWidth < 1024 
+                  ? cardRect ? `${Math.min(220, cardRect.width * 0.55)}px` : '220px'
+                  : cardRect ? `${Math.min(320, cardRect.width)}px` : '320px',
                 transform: historyExpanded ? 'translateX(0)' : 'translateX(-100%)',
                 transition: 'transform 300ms ease-out',
               }}

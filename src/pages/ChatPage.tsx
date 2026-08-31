@@ -1023,7 +1023,7 @@ export default function ChatPage() {
           style={{
             paddingBottom:
               window.innerWidth < 1024
-                ? `${Math.max(112, keyboardHeight + 112)}px`
+                ? `${Math.max(140, keyboardHeight + 140)}px`
                 : undefined,
           }}
         >
@@ -1104,8 +1104,8 @@ export default function ChatPage() {
                             <BookOpen className="h-3 md:h-4 w-3 md:w-4 text-primary shrink-0" />
                             Sources
                           </p>
-                          <div className="space-y-1">
-                            {/* Show unique KB names with label */}
+                          <div className="flex flex-wrap gap-2">
+                            {/* Show unique KB names only */}
                             {Array.from(
                               new Set(
                                 msg.sources.map((src) => {
@@ -1117,11 +1117,11 @@ export default function ChatPage() {
                                 })
                               )
                             ).map((kbName) => (
-                              <p key={kbName} className="text-xs text-muted-foreground font-medium">
-                                <span className="font-semibold">Knowledge Base</span>
-                                <span className="font-semibold"> -- </span>
-                                <span className="font-semibold text-foreground">{kbName}</span>
-                              </p>
+                              <span key={kbName} className="px-2.5 py-1 rounded-lg bg-card/80 border border-border/80 text-xs font-medium text-foreground">
+                                <span className="text-muted-foreground">[ source - </span>
+                                <span className="font-bold">{kbName}</span>
+                                <span className="text-muted-foreground"> ]</span>
+                              </span>
                             ))}
                           </div>
                         </div>

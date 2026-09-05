@@ -42,9 +42,7 @@ export default function ChatPage() {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const chatPageRef = useRef<HTMLDivElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
-  // Ref on the actual visible card box (the bg-card/90 rounded rectangle) —
-  // used to measure its real edges directly for the history panel below,
-  // rather than assuming a same-size ancestor lines up with it.
+
   const cardRef = useRef<HTMLDivElement>(null);
 
   const navigate = useNavigate();
@@ -69,16 +67,10 @@ export default function ChatPage() {
   // Track input focus to hide prompts on mobile
   const [inputFocused, setInputFocused] = useState(false);
 
-  // ─── MOBILE/TABLET KEYBOARD-AWARE COMPOSER ───
-  // Android/iOS change the visual viewport when the on-screen keyboard opens.
-  // We use that change to move only the composer above the keyboard.
+
   const [keyboardHeight, setKeyboardHeight] = useState(0);
   const layoutViewportHeightRef = useRef<number | null>(null);
 
-  // Concrete height used to force Android Chrome to repaint the mobile
-  // ChatPage immediately after the keyboard closes. Without this, Android
-  // can leave the flex layout in the keyboard-sized state until the next
-  // user interaction (exactly the behavior shown in your screenshot).
   const [mobileLayoutHeight, setMobileLayoutHeight] = useState<number | null>(
     null
   );
@@ -87,10 +79,7 @@ export default function ChatPage() {
   // when the textarea itself remains focused.
   const previousKeyboardHeightRef = useRef(0);
 
-  // Android Chrome: keep the document/layout viewport unchanged while
-  // the software keyboard overlays it. When overlaysContent=true,
-  // visualViewport may stay full-height, so the Virtual Keyboard API's
-  // boundingRect is the primary keyboard-height source.
+
   useEffect(() => {
     if (window.innerWidth >= 1024) return;
 
@@ -138,10 +127,7 @@ export default function ChatPage() {
     };
   }, []);
 
-  // Android's Back button can hide the keyboard without firing blur on
-  // the textarea. In your screenshots, tapping the page afterwards fixes
-  // the card because that tap finally blurs the input. Do that explicitly
-  // as soon as the keyboard reports that it has closed.
+
   useEffect(() => {
     if (window.innerWidth >= 1024) return;
 
@@ -252,19 +238,7 @@ export default function ChatPage() {
     };
   }, []);
 
-  // ─────────────────────────────────────────────────────────────
-  // ANDROID KEYBOARD FOCUS FIX
-  //
-  // The important part is NOT to fight Android after it scrolls.
-  // Android automatically scrolls a scrollable ancestor when a focused
-  // input is near the bottom of the viewport.
-  //
-  // We take control of the focus from the user's pointer/touch event and
-  // call focus({ preventScroll: true }). This tells the browser to open
-  // the keyboard without scrolling the ChatPage to reveal the input.
-  //
-  // The messages area remains normally scrollable.
-  // ─────────────────────────────────────────────────────────────
+ 
   useEffect(() => {
     if (window.innerWidth >= 1024) return;
 
@@ -283,9 +257,7 @@ export default function ChatPage() {
     const refreshMobileLayout = () => {
       const nextHeight = getMobileLayoutHeight();
 
-      // Force a browser layout read before updating React state. This
-      // triggers the same layout recalculation that currently happens only
-      // after you tap somewhere on the page.
+
       void document.documentElement.offsetHeight;
 
       setMobileLayoutHeight(nextHeight);
@@ -353,42 +325,13 @@ export default function ChatPage() {
     return () => timers.forEach(window.clearTimeout);
   }, [keyboardHeight]);
 
-  // ─────────────────────────────────────────────────────────────
-  // COMPOSER HORIZONTAL ALIGNMENT
-  // The composer uses position:fixed on mobile so it can float above
-  // the keyboard, which means its left/right offsets are measured from
-  // the viewport, not from this (possibly padded) chat container. Measure
-  // the container's actual edges so the composer lines up with the card
-  // instead of drifting off by whatever padding sits outside this page.
-  // ─────────────────────────────────────────────────────────────
+
   const [composerBounds, setComposerBounds] = useState<{
     left: number;
     width: number;
     bottom: number;
   } | null>(null);
 
-  // ─────────────────────────────────────────────────────────────
-  // HISTORY PANEL — MATCH THE CARD EXACTLY
-  // Measures the actual visible card box (cardRef) directly, on every
-  // breakpoint. Earlier attempts assumed the card's box was identical to
-  // one of its ancestors — reasonable on paper, but it kept coming out
-  // misaligned on mobile, tablet, AND desktop.
-  //
-  // Root cause (confirmed by reproducing this outside the app): a plain
-  // "measure once on mount, then only re-measure on window resize" misses
-  // any layout shift that ISN'T a window resize — e.g. a sidebar/nav that
-  // finishes expanding, auth/user data resolving, fonts loading, or
-  // anything else in the surrounding app shell that moves this card
-  // AFTER our first snapshot. `resize`/`orientationchange` never fire for
-  // that, so the copied position goes stale and the panel is left behind
-  // wherever the card USED to be — exactly the "panel stops short of the
-  // card" gap seen in the screenshots.
-  //
-  // Fix: a ResizeObserver directly on the card. It fires whenever the
-  // card's own box changes size for ANY reason (including a sidebar
-  // pushing/releasing it), so cardRect self-corrects instead of relying
-  // on us guessing every possible cause of a layout shift.
-  // ─────────────────────────────────────────────────────────────
   const [cardRect, setCardRect] = useState<{
     left: number;
     top: number;
@@ -414,17 +357,10 @@ export default function ChatPage() {
 
     measureCard();
 
-    // Catches size changes from ANY cause: the app's own sidebar/nav
-    // finishing an animation, responsive breakpoint changes, content
-    // reflow, etc. — not just window resize.
     const resizeObserver = new ResizeObserver(measureCard);
     resizeObserver.observe(cardEl);
 
-    // Belt-and-suspenders for the rarer case of a pure position shift
-    // with no size change (e.g. a translateX animation on an ancestor):
-    // a few staggered re-checks shortly after mount, the same pattern
-    // already used elsewhere in this file for Android's delayed layout
-    // reporting.
+ 
     const settleTimers = [0, 100, 300, 600, 1000].map((delay) =>
       window.setTimeout(measureCard, delay)
     );
@@ -451,10 +387,7 @@ export default function ChatPage() {
         setComposerBounds({
           left: containerRect.left,
           width: containerRect.width,
-          // How far the card's own bottom edge already sits above the
-          // true screen edge (whatever ambient padding the page adds).
-          // Resting the composer here keeps it flush with the card
-          // instead of floating above it and exposing the card's corner.
+         
           bottom: Math.max(0, window.innerHeight - containerRect.bottom),
         });
       }
